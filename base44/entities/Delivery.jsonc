@@ -1,0 +1,45 @@
+{
+  "name": "Delivery",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "vehicle": {
+      "type": "string",
+      "enum": [
+        "motor",
+        "biciklete",
+        "makine"
+      ],
+      "default": "motor"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "is_available": {
+      "type": "boolean",
+      "default": false
+    },
+    "image_url": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "name",
+    "phone",
+    "password"
+  ]
+}

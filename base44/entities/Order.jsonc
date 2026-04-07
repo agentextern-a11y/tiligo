@@ -1,0 +1,70 @@
+{
+  "name": "Order",
+  "type": "object",
+  "properties": {
+    "order_code": {
+      "type": "string"
+    },
+    "customer_name": {
+      "type": "string"
+    },
+    "customer_phone": {
+      "type": "string"
+    },
+    "customer_address": {
+      "type": "string"
+    },
+    "items": {
+      "type": "array",
+      "items": {
+        "type": "object"
+      }
+    },
+    "total": {
+      "type": "number"
+    },
+    "delivery_fee": {
+      "type": "number"
+    },
+    "business_id": {
+      "type": "string"
+    },
+    "business_name": {
+      "type": "string"
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "e_re",
+        "pranuar",
+        "ne_pergatitje",
+        "gati_per_dorezim",
+        "ne_rruge",
+        "dorezuar",
+        "anuluar"
+      ],
+      "default": "e_re"
+    },
+    "payment_method": {
+      "type": "string",
+      "default": "cash"
+    },
+    "delivery_id": {
+      "type": "string"
+    },
+    "delivery_name": {
+      "type": "string"
+    },
+    "notes": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "customer_name",
+    "customer_phone",
+    "customer_address",
+    "items",
+    "total",
+    "business_id"
+  ]
+}

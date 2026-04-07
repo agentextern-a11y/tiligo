@@ -1,0 +1,72 @@
+{
+  "name": "Business",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "phone": {
+      "type": "string"
+    },
+    "address": {
+      "type": "string"
+    },
+    "password": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "image_url": {
+      "type": "string"
+    },
+    "category": {
+      "type": "string",
+      "enum": [
+        "Ushqim",
+        "Pica",
+        "Sushi",
+        "Burgera",
+        "Kafe & \u00cbmb\u00eblsira",
+        "Farmaci",
+        "Supermarket",
+        "Tjeter"
+      ]
+    },
+    "status": {
+      "type": "string",
+      "enum": [
+        "pending",
+        "approved",
+        "rejected"
+      ],
+      "default": "pending"
+    },
+    "is_open": {
+      "type": "boolean",
+      "default": false
+    },
+    "rating": {
+      "type": "number",
+      "default": 0
+    },
+    "delivery_fee": {
+      "type": "number",
+      "default": 1.5
+    },
+    "min_order": {
+      "type": "number",
+      "default": 3
+    },
+    "delivery_time": {
+      "type": "string",
+      "default": "20-35 min"
+    }
+  },
+  "required": [
+    "name",
+    "phone",
+    "address",
+    "password"
+  ]
+}
