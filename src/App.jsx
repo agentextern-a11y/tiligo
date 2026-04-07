@@ -20,6 +20,7 @@ import DeliveryLogin from './pages/DeliveryLogin';
 import DeliveryDashboard from './pages/DeliveryDashboard';
 import AdminPanel from './pages/AdminPanel';
 import DownloadApp from './pages/DownloadApp';
+import DownloadProject from './pages/DownloadProject';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -63,6 +64,7 @@ const AuthenticatedApp = () => {
       <Route path="/dorezuesi/dashboard" element={<DeliveryDashboard />} />
       <Route path="/admin" element={<AdminPanel />} />
       <Route path="/shkarko-app" element={<DownloadApp />} />
+      <Route path="/download.zip" element={<DownloadProject />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
   );

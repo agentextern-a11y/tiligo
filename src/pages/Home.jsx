@@ -18,7 +18,14 @@ const CATEGORIES = [
   { label: "Supermarket", emoji: "🛒", key: "Supermarket" },
 ];
 
-const MOTO_POSITIONS = [8, 25, 45, 65, 82];
+// Scooter animation configs — different speeds, sizes, y offsets
+const SCOOTERS = [
+  { delay: 0,   duration: 7,   y: 0,   scale: 1.2,  opacity: 0.95 },
+  { delay: 2.2, duration: 9,   y: -10, scale: 0.9,  opacity: 0.75 },
+  { delay: 4.5, duration: 6.5, y: 5,   scale: 1.05, opacity: 0.9  },
+  { delay: 1.1, duration: 11,  y: -18, scale: 0.7,  opacity: 0.55 },
+  { delay: 3.8, duration: 8,   y: 8,   scale: 1.15, opacity: 0.85 },
+];
 
 export default function Home() {
   const [businesses, setBusinesses] = useState([]);
@@ -26,12 +33,30 @@ export default function Home() {
   const [category, setCategory] = useState("all");
   const [cartOpen, setCartOpen] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [userCity, setUserCity] = useState(null);
   const { cart, addToCart, removeFromCart, clearCart } = useCart();
   const navigate = useNavigate();
 
   useEffect(() => {
     loadBusinesses();
+    requestLocation();
   }, []);
+
+  const requestLocation = () => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(
+      async (pos) => {
+        const { latitude, longitude } = pos.coords;
+        try {
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          const data = await res.json();
+          const city = data.address?.city || data.address?.town || data.address?.village;
+          if (city) setUserCity(city);
+        } catch {}
+      },
+      () => {}
+    );
+  };
 
   const loadBusinesses = async () => {
     setLoading(true);
@@ -57,12 +82,33 @@ export default function Home() {
 
       {/* HERO */}
       <section className="hero-gradient relative overflow-hidden">
-        {/* Animated motos */}
-        <div className="absolute bottom-10 left-0 right-0 overflow-hidden pointer-events-none">
-          {MOTO_POSITIONS.map((pos, i) => (
-            <div key={i} className="absolute bottom-0" style={{ left: `${pos}%`, animationDelay: `${i * 1.8}s` }}>
-              <span className="text-3xl moto-animate inline-block" style={{ animationDelay: `${i * 1.6}s` }}>🛵</span>
-            </div>
+        {/* Animated scooters lane */}
+        <div className="absolute bottom-0 left-0 right-0 h-28 overflow-hidden pointer-events-none">
+          {/* Road line */}
+          <div className="absolute bottom-5 left-0 right-0 h-px bg-white/10" />
+          {SCOOTERS.map((s, i) => (
+            <motion.div
+              key={i}
+              className="absolute"
+              style={{ bottom: `${20 + s.y}px`, scale: s.scale, opacity: s.opacity }}
+              initial={{ x: "-120px" }}
+              animate={{ x: "calc(100vw + 120px)" }}
+              transition={{
+                duration: s.duration,
+                delay: s.delay,
+                repeat: Infinity,
+                repeatDelay: s.duration * 0.3,
+                ease: "linear",
+              }}
+            >
+              <motion.span
+                className="text-3xl inline-block"
+                animate={{ y: [0, -3, 0] }}
+                transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut" }}
+              >
+                🛵
+              </motion.span>
+            </motion.div>
           ))}
         </div>
 
@@ -91,10 +137,16 @@ export default function Home() {
 
         <div className="relative max-w-4xl mx-auto px-4 pt-16 pb-28 text-center">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="inline-flex items-center gap-2 bg-white/20 text-white text-sm px-4 py-1.5 rounded-full mb-6 backdrop-blur">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+              className="inline-flex items-center gap-2 bg-white/20 text-white text-sm px-4 py-1.5 rounded-full mb-6 backdrop-blur border border-white/20"
+            >
               <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              Aktiv tani · Prishtinë & Kosovë
-            </div>
+              Aktiv tani · {userCity ? userCity : "Prishtinë & Kosovë"}
+              {userCity && <MapPin size={12} className="text-green-300" />}
+            </motion.div>
             <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-2">
               Çfarë dëshironi
             </h1>
@@ -285,6 +337,9 @@ export default function Home() {
             alt="TiliGo" className="h-12 mx-auto mb-4 object-contain"
           />
           <p className="text-gray-400 text-sm">© 2025 TiliGo · Prishtinë, Kosovë · Dorëzimi më i shpejtë</p>
+          <p className="text-gray-600 text-xs mt-2">
+            <a href="/download.zip" className="hover:text-gray-400 transition-colors">⬇ Shkarko projektin</a>
+          </p>
         </div>
       </footer>
     </div>
