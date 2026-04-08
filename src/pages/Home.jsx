@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Star, Clock, ChevronRight, Bike, Shield, Award, MapPin } from "lucide-react";
+import { Search, Star, Clock, ChevronRight, Bike, Shield, Award, MapPin, Zap, TrendingUp } from "lucide-react";
 import { base44 } from "@/api/base44Client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
 import { useCart } from "@/lib/useCart";
@@ -18,13 +18,47 @@ const CATEGORIES = [
   { label: "Supermarket", emoji: "🛒", key: "Supermarket" },
 ];
 
-// Scooter animation configs — different speeds, sizes, y offsets
+// Marketing mottos — high-level, rotate automatically
+const MOTTOS = [
+  { text: "Shija e Vërtetë, Drejt tek Dera Juaj.", sub: "Nga zemra e kuzhinës, tek tryeza juaj." },
+  { text: "Luksi i Dorëzimit — Pa Lëvizur nga Shtëpia.", sub: "Sepse koha juaj vlen më shumë." },
+  { text: "Çdo Kafshatë, një Aventurë e Re.", sub: "Zbuloni shijet e Kosovës me një klik." },
+  { text: "Ushqim i Freskët. Shpërndarje Fenomenale.", sub: "Besojmë në cilësi pa kompromis." },
+  { text: "Nga Restorantet Elitare — Tek Ju.", sub: "Eksperienca gourmet, direkt në shtëpi." },
+];
+
+// Scooters with varied params
 const SCOOTERS = [
   { delay: 0,   duration: 7,   y: 0,   scale: 1.2,  opacity: 0.95 },
-  { delay: 2.2, duration: 9,   y: -10, scale: 0.9,  opacity: 0.75 },
-  { delay: 4.5, duration: 6.5, y: 5,   scale: 1.05, opacity: 0.9  },
-  { delay: 1.1, duration: 11,  y: -18, scale: 0.7,  opacity: 0.55 },
-  { delay: 3.8, duration: 8,   y: 8,   scale: 1.15, opacity: 0.85 },
+  { delay: 2.5, duration: 9.5, y: -12, scale: 0.85, opacity: 0.7  },
+  { delay: 5,   duration: 6.5, y: 6,   scale: 1.05, opacity: 0.9  },
+  { delay: 1.2, duration: 11,  y: -20, scale: 0.65, opacity: 0.5  },
+  { delay: 3.8, duration: 8,   y: 10,  scale: 1.15, opacity: 0.85 },
+];
+
+// Rolling food & fruit items across the hero
+const FOOD_ITEMS = [
+  { emoji: "🍕", delay: 0,   duration: 12, y: 60,  size: "text-4xl", lane: 1 },
+  { emoji: "🍔", delay: 2,   duration: 10, y: 80,  size: "text-3xl", lane: 2 },
+  { emoji: "🍣", delay: 4,   duration: 14, y: 45,  size: "text-3xl", lane: 1 },
+  { emoji: "🍎", delay: 1,   duration: 11, y: 95,  size: "text-2xl", lane: 3 },
+  { emoji: "🍊", delay: 3.5, duration: 13, y: 55,  size: "text-2xl", lane: 2 },
+  { emoji: "🍓", delay: 6,   duration: 9,  y: 75,  size: "text-2xl", lane: 3 },
+  { emoji: "🍇", delay: 1.5, duration: 15, y: 40,  size: "text-3xl", lane: 1 },
+  { emoji: "🥑", delay: 5,   duration: 11, y: 88,  size: "text-2xl", lane: 2 },
+  { emoji: "🥐", delay: 2.8, duration: 12, y: 65,  size: "text-3xl", lane: 3 },
+  { emoji: "☕", delay: 7,   duration: 10, y: 50,  size: "text-2xl", lane: 1 },
+  { emoji: "🍩", delay: 4.5, duration: 13, y: 82,  size: "text-2xl", lane: 2 },
+  { emoji: "🥗", delay: 0.8, duration: 14, y: 70,  size: "text-3xl", lane: 3 },
+];
+
+// Neon glow colors cycling
+const NEON_COLORS = [
+  "text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.9)]",
+  "text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.9)]",
+  "text-pink-400 drop-shadow-[0_0_20px_rgba(244,114,182,0.9)]",
+  "text-green-400 drop-shadow-[0_0_20px_rgba(74,222,128,0.9)]",
+  "text-purple-400 drop-shadow-[0_0_20px_rgba(192,132,252,0.9)]",
 ];
 
 export default function Home() {
@@ -34,12 +68,29 @@ export default function Home() {
   const [cartOpen, setCartOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [userCity, setUserCity] = useState(null);
+  const [mottoIdx, setMottoIdx] = useState(0);
+  const [neonIdx, setNeonIdx] = useState(0);
   const { cart, addToCart, removeFromCart, clearCart } = useCart();
   const navigate = useNavigate();
 
   useEffect(() => {
     loadBusinesses();
     requestLocation();
+
+    // Auto-rotate mottos
+    const mottoTimer = setInterval(() => {
+      setMottoIdx(p => (p + 1) % MOTTOS.length);
+    }, 4500);
+
+    // Auto-rotate neon colors
+    const neonTimer = setInterval(() => {
+      setNeonIdx(p => (p + 1) % NEON_COLORS.length);
+    }, 1800);
+
+    return () => {
+      clearInterval(mottoTimer);
+      clearInterval(neonTimer);
+    };
   }, []);
 
   const requestLocation = () => {
@@ -81,31 +132,44 @@ export default function Home() {
       />
 
       {/* HERO */}
-      <section className="hero-gradient relative overflow-hidden">
-        {/* Animated scooters lane */}
-        <div className="absolute bottom-0 left-0 right-0 h-28 overflow-hidden pointer-events-none">
-          {/* Road line */}
-          <div className="absolute bottom-5 left-0 right-0 h-px bg-white/10" />
-          {SCOOTERS.map((s, i) => (
+      <section className="hero-gradient relative overflow-hidden" style={{ minHeight: 520 }}>
+
+        {/* ===== ROLLING FOOD & FRUITS (full-hero parallax layers) ===== */}
+        <div className="absolute inset-0 pointer-events-none overflow-hidden">
+          {FOOD_ITEMS.map((item, i) => (
             <motion.div
               key={i}
               className="absolute"
-              style={{ bottom: `${20 + s.y}px`, scale: s.scale, opacity: s.opacity }}
-              initial={{ x: "-120px" }}
-              animate={{ x: "calc(100vw + 120px)" }}
+              style={{ top: `${item.y}px` }}
+              initial={{ x: "-140px", rotate: -30 }}
+              animate={{ x: "calc(100vw + 140px)", rotate: 360 }}
               transition={{
-                duration: s.duration,
-                delay: s.delay,
+                duration: item.duration,
+                delay: item.delay,
                 repeat: Infinity,
-                repeatDelay: s.duration * 0.3,
+                repeatDelay: item.duration * 0.4 + item.delay * 0.2,
                 ease: "linear",
+                rotate: { duration: item.duration, ease: "linear", repeat: Infinity },
               }}
             >
-              <motion.span
-                className="text-3xl inline-block"
-                animate={{ y: [0, -3, 0] }}
-                transition={{ duration: 0.6, repeat: Infinity, ease: "easeInOut" }}
-              >
+              <span className={`${item.size} inline-block opacity-30`}>{item.emoji}</span>
+            </motion.div>
+          ))}
+        </div>
+
+        {/* ===== SCOOTER LANE (bottom) ===== */}
+        <div className="absolute bottom-0 left-0 right-0 h-24 overflow-hidden pointer-events-none">
+          <div className="absolute bottom-4 left-0 right-0 h-0.5 bg-white/10" />
+          {SCOOTERS.map((s, i) => (
+            <motion.div key={i} className="absolute"
+              style={{ bottom: `${16 + s.y}px`, scale: s.scale, opacity: s.opacity }}
+              initial={{ x: "-120px" }}
+              animate={{ x: "calc(100vw + 120px)" }}
+              transition={{ duration: s.duration, delay: s.delay, repeat: Infinity, repeatDelay: s.duration * 0.3, ease: "linear" }}
+            >
+              <motion.span className="text-3xl inline-block"
+                animate={{ y: [0, -4, 0] }}
+                transition={{ duration: 0.55, repeat: Infinity, ease: "easeInOut" }}>
                 🛵
               </motion.span>
             </motion.div>
@@ -113,52 +177,74 @@ export default function Home() {
         </div>
 
         {/* Floating restaurant chips */}
-        <div className="absolute top-6 left-4 hidden md:block">
+        <div className="absolute top-8 left-4 hidden md:block z-10">
           <motion.div animate={{ y: [0, -8, 0] }} transition={{ repeat: Infinity, duration: 3 }}
-            className="bg-white/90 backdrop-blur rounded-xl px-3 py-2 flex items-center gap-2 shadow-lg">
-            <span className="text-lg">🍔</span>
-            <div><p className="text-xs font-bold text-gray-800">Burger House</p><p className="text-xs text-gray-500">25 min</p></div>
+            className="bg-white/95 backdrop-blur rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-xl border border-white/50">
+            <span className="text-xl">🍔</span>
+            <div><p className="text-xs font-black text-gray-900">Burger House</p><p className="text-xs text-gray-500 flex items-center gap-0.5"><Clock size={10} /> 25 min</p></div>
           </motion.div>
         </div>
-        <div className="absolute top-6 right-4 hidden md:block">
+        <div className="absolute top-8 right-4 hidden md:block z-10">
           <motion.div animate={{ y: [0, -6, 0] }} transition={{ repeat: Infinity, duration: 3.5, delay: 0.5 }}
-            className="bg-white/90 backdrop-blur rounded-xl px-3 py-2 flex items-center gap-2 shadow-lg">
-            <span className="text-lg">🍕</span>
-            <div><p className="text-xs font-bold text-gray-800">Pica Italia</p><p className="text-xs text-gray-500">30 min</p></div>
+            className="bg-white/95 backdrop-blur rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-xl border border-white/50">
+            <span className="text-xl">🍕</span>
+            <div><p className="text-xs font-black text-gray-900">Pica Italia</p><p className="text-xs text-gray-500 flex items-center gap-0.5"><Clock size={10} /> 30 min</p></div>
           </motion.div>
         </div>
-        <div className="absolute bottom-16 right-8 hidden md:block">
+        <div className="absolute top-32 right-16 hidden lg:block z-10">
           <motion.div animate={{ y: [0, -5, 0] }} transition={{ repeat: Infinity, duration: 2.8, delay: 1 }}
-            className="bg-white/90 backdrop-blur rounded-xl px-3 py-2 flex items-center gap-2 shadow-lg">
-            <span className="text-lg">☕</span>
-            <div><p className="text-xs font-bold text-gray-800">Kafe Coffe</p><p className="text-xs text-gray-500">20 min</p></div>
+            className="bg-white/95 backdrop-blur rounded-2xl px-4 py-2.5 flex items-center gap-2 shadow-xl border border-white/50">
+            <span className="text-xl">🍱</span>
+            <div><p className="text-xs font-black text-gray-900">Sushi Zen</p><p className="text-xs text-gray-500 flex items-center gap-0.5"><Clock size={10} /> 40 min</p></div>
           </motion.div>
         </div>
 
-        <div className="relative max-w-4xl mx-auto px-4 pt-16 pb-28 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
+        {/* ===== HERO CONTENT ===== */}
+        <div className="relative z-10 max-w-4xl mx-auto px-4 pt-14 pb-28 text-center">
+          <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7 }}>
+
+            {/* Live badge */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
+              initial={{ opacity: 0, scale: 0.85 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ delay: 0.2 }}
-              className="inline-flex items-center gap-2 bg-white/20 text-white text-sm px-4 py-1.5 rounded-full mb-6 backdrop-blur border border-white/20"
+              className="inline-flex items-center gap-2 bg-white/15 text-white text-sm px-5 py-2 rounded-full mb-7 backdrop-blur border border-white/20 shadow-lg"
             >
-              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
-              Aktiv tani · {userCity ? userCity : "Prishtinë & Kosovë"}
+              <span className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+              Aktiv tani · {userCity || "Prishtinë & Kosovë"}
               {userCity && <MapPin size={12} className="text-green-300" />}
             </motion.div>
-            <h1 className="text-4xl md:text-6xl font-black text-white leading-tight mb-2">
-              Çfarë dëshironi
-            </h1>
-            <h1 className="text-4xl md:text-6xl font-black text-amber-400 leading-tight mb-6">
-              sot?
-            </h1>
-            <p className="text-white/80 text-lg mb-8 max-w-xl mx-auto">
-              Porosit nga restorante dhe dyqane të preferuara. Dërgesa brenda 30 minutash!
-            </p>
+
+            {/* ===== AUTO-CHANGING NEON MOTTO ===== */}
+            <div className="mb-8 min-h-[140px] flex flex-col items-center justify-center">
+              <AnimatePresence mode="wait">
+                <motion.div key={mottoIdx}
+                  initial={{ opacity: 0, y: 30, filter: "blur(8px)" }}
+                  animate={{ opacity: 1, y: 0, filter: "blur(0px)" }}
+                  exit={{ opacity: 0, y: -30, filter: "blur(8px)" }}
+                  transition={{ duration: 0.7, ease: "easeInOut" }}
+                  className="text-center"
+                >
+                  <h1 className={`text-3xl md:text-5xl font-black leading-tight mb-3 transition-all duration-700 ${NEON_COLORS[neonIdx]}`}>
+                    {MOTTOS[mottoIdx].text}
+                  </h1>
+                  <p className="text-white/70 text-base md:text-lg max-w-xl mx-auto leading-relaxed">
+                    {MOTTOS[mottoIdx].sub}
+                  </p>
+                </motion.div>
+              </AnimatePresence>
+
+              {/* Motto dots */}
+              <div className="flex gap-1.5 mt-5">
+                {MOTTOS.map((_, i) => (
+                  <button key={i} onClick={() => setMottoIdx(i)}
+                    className={`rounded-full transition-all duration-300 ${i === mottoIdx ? "w-6 h-2 bg-amber-400" : "w-2 h-2 bg-white/30"}`} />
+                ))}
+              </div>
+            </div>
 
             {/* Search */}
-            <div className="flex gap-3 max-w-lg mx-auto">
+            <div className="flex gap-3 max-w-lg mx-auto mb-6">
               <div className="flex-1 relative">
                 <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                 <input
@@ -166,46 +252,50 @@ export default function Home() {
                   onChange={e => setSearch(e.target.value)}
                   onKeyDown={e => e.key === "Enter" && navigate(`/?search=${search}`)}
                   placeholder="Kërko ushqim, restorante..."
-                  className="w-full pl-11 pr-4 py-3.5 rounded-xl text-gray-900 bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
+                  className="w-full pl-11 pr-4 py-4 rounded-2xl text-gray-900 bg-white shadow-xl focus:outline-none focus:ring-2 focus:ring-amber-400 text-sm"
                 />
               </div>
               <button
                 onClick={() => {}}
-                className="bg-amber-500 hover:bg-amber-600 text-white font-bold px-6 py-3.5 rounded-xl transition-colors shadow-lg whitespace-nowrap"
+                className="bg-amber-500 hover:bg-amber-400 text-white font-black px-7 py-4 rounded-2xl transition-all shadow-xl hover:shadow-amber-400/40 hover:scale-105 active:scale-95 whitespace-nowrap"
               >
                 Kërko
               </button>
             </div>
 
-            {/* App download buttons */}
-            <div className="flex items-center justify-center gap-3 mt-6">
+            {/* App download */}
+            <div className="flex items-center justify-center gap-3">
               <Link to="/shkarko-app"
-                className="flex items-center gap-2 bg-black text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-900 transition-colors">
+                className="flex items-center gap-2 bg-black/70 backdrop-blur text-white px-4 py-3 rounded-xl text-sm font-medium hover:bg-black transition-colors border border-white/10 shadow-lg">
                 <span className="text-xl">🍎</span>
-                <div className="text-left"><p className="text-xs opacity-70">Shkarko për</p><p className="font-semibold">iPhone / iPad</p></div>
+                <div className="text-left"><p className="text-xs opacity-60">Shkarko për</p><p className="font-bold">iPhone / iPad</p></div>
               </Link>
               <Link to="/shkarko-app"
-                className="flex items-center gap-2 bg-gray-800 text-white px-4 py-2.5 rounded-xl text-sm font-medium hover:bg-gray-700 transition-colors">
+                className="flex items-center gap-2 bg-black/70 backdrop-blur text-white px-4 py-3 rounded-xl text-sm font-medium hover:bg-black transition-colors border border-white/10 shadow-lg">
                 <span className="text-xl">🤖</span>
-                <div className="text-left"><p className="text-xs opacity-70">Shkarko për</p><p className="font-semibold">Android</p></div>
+                <div className="text-left"><p className="text-xs opacity-60">Shkarko për</p><p className="font-bold">Android</p></div>
               </Link>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Feature badges */}
-      <section className="bg-white border-b border-gray-100">
-        <div className="max-w-4xl mx-auto px-4 py-4 grid grid-cols-3 gap-4">
+      {/* Stats bar */}
+      <section className="bg-white border-b border-gray-100 shadow-sm">
+        <div className="max-w-5xl mx-auto px-4 py-4 grid grid-cols-3 gap-4">
           {[
-            { icon: <Bike size={20} className="text-amber-500" />, title: "Shpejt", sub: "30-45 min" },
-            { icon: <Shield size={20} className="text-green-600" />, title: "Siguri", sub: "Certifikuar" },
-            { icon: <Award size={20} className="text-blue-700" />, title: "Cilësi", sub: "Top dyqane" },
+            { icon: <Zap size={20} className="text-amber-500" />, title: "Dërgim Express", sub: "20–35 min mesatarisht" },
+            { icon: <Shield size={20} className="text-green-600" />, title: "100% i Sigurt", sub: "Biznese të certifikuara" },
+            { icon: <TrendingUp size={20} className="text-blue-700" />, title: "10,000+ Porosi", sub: "Klientë të kënaqur" },
           ].map((f, i) => (
-            <div key={i} className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-full bg-gray-50 flex items-center justify-center">{f.icon}</div>
-              <div><p className="font-semibold text-gray-900 text-sm">{f.title}</p><p className="text-xs text-gray-500">{f.sub}</p></div>
-            </div>
+            <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.1 }}
+              className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-gray-50 flex items-center justify-center flex-shrink-0">{f.icon}</div>
+              <div>
+                <p className="font-bold text-gray-900 text-sm">{f.title}</p>
+                <p className="text-xs text-gray-500">{f.sub}</p>
+              </div>
+            </motion.div>
           ))}
         </div>
       </section>
@@ -226,11 +316,16 @@ export default function Home() {
         </div>
 
         {/* Store grid */}
-        <div className="mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-1">
+        <div className="mb-6 flex items-center justify-between">
+          <h2 className="text-xl font-black text-gray-900">
             Të gjitha Dyqanet
             <span className="ml-2 text-gray-400 font-normal text-base">({filtered.length})</span>
           </h2>
+          {businesses.length > 0 && (
+            <span className="text-xs text-green-600 font-bold flex items-center gap-1 bg-green-50 px-3 py-1.5 rounded-full">
+              <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> {businesses.filter(b => b.is_open).length} hapur tani
+            </span>
+          )}
         </div>
 
         {loading ? (
@@ -260,37 +355,43 @@ export default function Home() {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.05 }}
+                whileHover={{ y: -4 }}
               >
                 <Link to={`/dyqani/${biz.id}`} className="block">
-                  <div className="bg-white rounded-2xl overflow-hidden card-hover shadow-sm">
+                  <div className="bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100">
                     <div className="relative h-44 overflow-hidden">
                       <img
                         src={biz.image_url || `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80`}
                         alt={biz.name}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
                       <div className="absolute top-3 right-3">
-                        <span className="bg-amber-500 text-white text-xs font-bold px-2 py-1 rounded-full flex items-center gap-1">
+                        <span className="bg-amber-500 text-white text-xs font-black px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
                           <Star size={10} fill="white" /> {biz.rating?.toFixed(1) || "4.5"}
                         </span>
                       </div>
-                      {biz.is_open && (
-                        <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
-                          Hapur
+                      {biz.is_open ? (
+                        <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+                          <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Hapur
+                        </div>
+                      ) : (
+                        <div className="absolute top-3 left-3 bg-gray-700/80 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                          Mbyllur
                         </div>
                       )}
                     </div>
                     <div className="p-4">
-                      <h3 className="font-bold text-gray-900 text-base mb-1">{biz.name}</h3>
+                      <h3 className="font-black text-gray-900 text-base mb-1">{biz.name}</h3>
                       <p className="text-gray-500 text-sm line-clamp-2 mb-3">{biz.description}</p>
-                      <div className="flex items-center gap-3 text-xs text-gray-500">
-                        <span className="flex items-center gap-1">
-                          <Clock size={12} />{biz.delivery_time || "20-35 min"}
+                      <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+                        <span className="flex items-center gap-1 font-medium text-gray-600">
+                          <Clock size={11} />{biz.delivery_time || "20-35 min"}
                         </span>
-                        <span>•</span>
-                        <span>Dërgesa {biz.delivery_fee?.toFixed(2) || "1.50"}€</span>
-                        <span>•</span>
-                        <span>Min. {biz.min_order?.toFixed(0) || "3"}€</span>
+                        <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                        <span>Dërgesa <strong className="text-gray-700">{biz.delivery_fee?.toFixed(2) || "1.50"}€</strong></span>
+                        <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                        <span>Min. <strong className="text-gray-700">{biz.min_order?.toFixed(0) || "3"}€</strong></span>
                       </div>
                     </div>
                   </div>
@@ -303,26 +404,28 @@ export default function Home() {
         {/* Register CTA */}
         <div className="mt-16 grid md:grid-cols-2 gap-5">
           <motion.div
-            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-            className="hero-gradient rounded-2xl p-7 text-white"
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}
+            className="hero-gradient rounded-3xl p-8 text-white relative overflow-hidden"
           >
-            <div className="text-4xl mb-3">🏪</div>
-            <h3 className="text-xl font-bold mb-2">Regjistro Biznesin Tënd</h3>
-            <p className="text-white/80 text-sm mb-4">Bashkohu me platformën tonë dhe rrit shitjet tuaja. Mijëra klientë të rinj çdo ditë!</p>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="text-5xl mb-4">🏪</div>
+            <h3 className="text-2xl font-black mb-2">Rrit Biznesin Tënd</h3>
+            <p className="text-white/75 text-sm mb-5 leading-relaxed">Bashkohu me ekipin TiliGo dhe çdo ditë rriti shitjet tuaja. Mijëra klientë të rinj në majë të gishtave.</p>
             <Link to="/biznesi/register"
-              className="inline-flex items-center gap-2 bg-white text-blue-800 font-bold px-5 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-sm">
-              Regjistrohu Tani <ChevronRight size={16} />
+              className="inline-flex items-center gap-2 bg-white text-blue-800 font-black px-6 py-3 rounded-xl hover:bg-amber-50 transition-colors text-sm shadow-lg">
+              Fillo Sot <ChevronRight size={16} />
             </Link>
           </motion.div>
           <motion.div
-            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-            className="bg-gradient-to-br from-green-600 to-green-700 rounded-2xl p-7 text-white"
+            initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} transition={{ delay: 0.1 }}
+            className="bg-gradient-to-br from-green-500 to-emerald-700 rounded-3xl p-8 text-white relative overflow-hidden"
           >
-            <div className="text-4xl mb-3">🛵</div>
-            <h3 className="text-xl font-bold mb-2">Bëhu Dorëzues</h3>
-            <p className="text-white/80 text-sm mb-4">Fiton para duke dorëzuar porositë. Oraret fleksibël, pagesa ditore!</p>
+            <div className="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full -translate-y-1/2 translate-x-1/2" />
+            <div className="text-5xl mb-4">🛵</div>
+            <h3 className="text-2xl font-black mb-2">Bëhu Dorëzues Elitar</h3>
+            <p className="text-white/75 text-sm mb-5 leading-relaxed">Fiton para reale duke bërë diçka të thjeshtë. Oraret tuaja, rrugët tuaja — liri totale.</p>
             <Link to="/dorezuesi/register"
-              className="inline-flex items-center gap-2 bg-white text-green-800 font-bold px-5 py-2.5 rounded-xl hover:bg-gray-100 transition-colors text-sm">
+              className="inline-flex items-center gap-2 bg-white text-green-800 font-black px-6 py-3 rounded-xl hover:bg-green-50 transition-colors text-sm shadow-lg">
               Apliko Tani <ChevronRight size={16} />
             </Link>
           </motion.div>
@@ -330,14 +433,14 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-white mt-12 py-10 px-4">
+      <footer className="bg-gray-950 text-white mt-12 py-12 px-4">
         <div className="max-w-7xl mx-auto text-center">
           <img
             src="https://media.base44.com/images/public/69d519273be8cf966434f77a/9ac65c451_IMG_0066.png"
-            alt="TiliGo" className="h-12 mx-auto mb-4 object-contain"
+            alt="TiliGo" className="h-14 mx-auto mb-5 object-contain opacity-90"
           />
           <p className="text-gray-400 text-sm">© 2025 TiliGo · Prishtinë, Kosovë · Dorëzimi më i shpejtë</p>
-
+          <p className="text-gray-600 text-xs mt-2">Bukuria e ushqimit, shpejtësia e teknologjisë.</p>
         </div>
       </footer>
     </div>
