@@ -168,13 +168,16 @@ export default function TrackOrder() {
   // Tick countdown every second
   useEffect(() => {
     if (countdownRef.current) clearInterval(countdownRef.current);
-    if (etaSeconds !== null && etaSeconds > 0 && order?.status !== "dorezuar") {
+    if (etaSeconds !== null && etaSeconds > 0 && order?.status !== "dorezuar" && order?.status !== "anuluar") {
       countdownRef.current = setInterval(() => {
-        setEtaSeconds(s => (s > 0 ? s - 1 : 0));
+        setEtaSeconds(s => {
+          if (s <= 1) { clearInterval(countdownRef.current); return 0; }
+          return s - 1;
+        });
       }, 1000);
     }
     return () => clearInterval(countdownRef.current);
-  }, [order?.status, Math.floor((etaSeconds ?? 0) / 30)]);
+  }, [order?.status, etaSeconds !== null]);
 
   const currentStep = STATUS_STEPS.findIndex(s => s.key === order?.status);
 
