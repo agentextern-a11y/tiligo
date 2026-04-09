@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Edit2, Package, ToggleLeft, ToggleRight, Upload, LogOut, Bell, TrendingUp, Clock, CheckCircle2, XCircle, ChefHat, Bike, BarChart2 } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, ToggleLeft, ToggleRight, Upload, LogOut, Bell, TrendingUp, Clock, CheckCircle2, XCircle, ChefHat, Bike, BarChart2, Settings, AlertTriangle } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import TiliGoLogo from "@/components/TiliGoLogo";
@@ -219,6 +219,7 @@ export default function BusinessDashboard() {
             { key: "products", icon: <ChefHat size={15} />, label: `Produktet` },
             { key: "analytics", icon: <BarChart2 size={15} />, label: "Analitika" },
             { key: "history", icon: <Clock size={15} />, label: "Historiku" },
+            { key: "settings", icon: <Settings size={15} />, label: "Cilësimet" },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
               className={`relative flex items-center gap-1.5 px-4 py-3.5 text-xs font-bold border-b-2 transition-colors ${tab === t.key ? "border-blue-700 text-blue-700" : "border-transparent text-gray-500 hover:text-gray-700"}`}>
@@ -497,6 +498,58 @@ export default function BusinessDashboard() {
                 </div>
               </motion.div>
             ))}
+          </div>
+        )}
+
+        {/* SETTINGS TAB */}
+        {tab === "settings" && (
+          <div className="space-y-4 max-w-lg">
+            <div className="bg-white rounded-2xl p-5 shadow-sm">
+              <h3 className="font-bold text-gray-900 mb-1">Informacionet e Llogarisë</h3>
+              <p className="text-gray-500 text-sm mb-4">Të dhënat e biznesit tuaj</p>
+              <div className="space-y-3 text-sm">
+                <div className="flex justify-between py-2 border-b border-gray-50">
+                  <span className="text-gray-500">Emri</span>
+                  <span className="font-bold text-gray-900">{biz.name}</span>
+                </div>
+                <div className="flex justify-between py-2 border-b border-gray-50">
+                  <span className="text-gray-500">Telefoni</span>
+                  <span className="font-bold text-gray-900">{biz.phone}</span>
+                </div>
+                <div className="flex justify-between py-2">
+                  <span className="text-gray-500">Adresa</span>
+                  <span className="font-bold text-gray-900 text-right max-w-[60%]">{biz.address}</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="bg-white rounded-2xl p-5 shadow-sm">
+              <h3 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+                <LogOut size={16} className="text-gray-500" /> Dil nga Llogaria
+              </h3>
+              <p className="text-gray-500 text-sm mb-4">Do të ridrejtoheni në faqen kryesore.</p>
+              <button onClick={logout}
+                className="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 rounded-xl transition-colors text-sm">
+                Dil nga Llogaria
+              </button>
+            </div>
+
+            <div className="bg-red-50 border border-red-200 rounded-2xl p-5">
+              <h3 className="font-bold text-red-700 mb-1 flex items-center gap-2">
+                <AlertTriangle size={16} /> Fshij Llogarinë
+              </h3>
+              <p className="text-red-500 text-sm mb-4">Ky veprim është i pakthyeshëm. Të gjitha të dhënat tuaja do të fshihen përgjithmonë.</p>
+              <button
+                onClick={async () => {
+                  if (!confirm("Jeni absolutisht i sigurt? Kjo nuk mund të kthehet mbrapsht!")) return;
+                  await base44.entities.Business.delete(biz.id);
+                  localStorage.removeItem("tiligo_business");
+                  navigate("/");
+                }}
+                className="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 rounded-xl transition-colors text-sm">
+                🗑️ Fshij Llogarinë Përgjithmonë
+              </button>
+            </div>
           </div>
         )}
       </div>

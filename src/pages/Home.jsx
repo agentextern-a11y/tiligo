@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Search, Star, Clock, ChevronRight, Bike, Shield, Award, MapPin, Zap, TrendingUp } from "lucide-react";
+import { Search, Star, Clock, ChevronRight, Bike, Shield, Award, MapPin, Zap, TrendingUp, RefreshCw } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import Navbar from "@/components/Navbar";
 import CartDrawer from "@/components/CartDrawer";
+import MobileBottomNav from "@/components/MobileBottomNav";
 import { useCart } from "@/lib/useCart";
 
 const CATEGORIES = [
@@ -61,6 +62,29 @@ const NEON_COLORS = [
   "text-purple-400 drop-shadow-[0_0_20px_rgba(192,132,252,0.9)]",
 ];
 
+// Pull-to-Refresh hook
+function usePullToRefresh(onRefresh) {
+  const startY = useRef(0);
+  const [pulling, setPulling] = useState(false);
+  const [pullDist, setPullDist] = useState(0);
+  const threshold = 72;
+
+  const onTouchStart = (e) => { startY.current = e.touches[0].clientY; };
+  const onTouchMove = (e) => {
+    const dy = e.touches[0].clientY - startY.current;
+    if (dy > 0 && window.scrollY === 0) {
+      setPulling(true);
+      setPullDist(Math.min(dy * 0.45, threshold + 20));
+    }
+  };
+  const onTouchEnd = () => {
+    if (pullDist >= threshold) onRefresh();
+    setPulling(false);
+    setPullDist(0);
+  };
+  return { pulling, pullDist, threshold, onTouchStart, onTouchMove, onTouchEnd };
+}
+
 export default function Home() {
   const [businesses, setBusinesses] = useState([]);
   const [search, setSearch] = useState("");
@@ -70,6 +94,7 @@ export default function Home() {
   const [userCity, setUserCity] = useState(null);
   const [mottoIdx, setMottoIdx] = useState(0);
   const [neonIdx, setNeonIdx] = useState(0);
+  const [refreshing, setRefreshing] = useState(false);
   const { cart, addToCart, removeFromCart, clearCart } = useCart();
   const navigate = useNavigate();
 
@@ -109,6 +134,14 @@ export default function Home() {
     );
   };
 
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await loadBusinesses();
+    setRefreshing(false);
+  };
+
+  const ptr = usePullToRefresh(handleRefresh);
+
   const loadBusinesses = async () => {
     setLoading(true);
     const data = await base44.entities.Business.filter({ status: "approved" });
@@ -124,7 +157,28 @@ export default function Home() {
   });
 
   return (
-    <div className="min-h-screen bg-[#f0f4f8]">
+    <div
+      className="min-h-screen bg-[#f0f4f8] dark:bg-gray-950"
+      onTouchStart={ptr.onTouchStart}
+      onTouchMove={ptr.onTouchMove}
+      onTouchEnd={ptr.onTouchEnd}
+    >
+      {/* Pull to refresh indicator */}
+      <AnimatePresence>
+        {ptr.pulling && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: ptr.pullDist }}
+            exit={{ opacity: 0, height: 0 }}
+            className="flex items-center justify-center bg-blue-50 dark:bg-blue-950 overflow-hidden"
+          >
+            <RefreshCw size={20} className={`text-blue-600 ${ptr.pullDist >= ptr.threshold ? "animate-spin" : ""}`} />
+            <span className="ml-2 text-blue-600 text-sm font-bold">
+              {ptr.pullDist >= ptr.threshold ? "Lëshoni për të rifreskuar" : "Tërhiqni për të rifreskuar"}
+            </span>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <Navbar cart={cart} onCartClick={() => setCartOpen(true)} />
       <CartDrawer
         open={cartOpen} onClose={() => setCartOpen(false)}
@@ -433,7 +487,7 @@ export default function Home() {
       </main>
 
       {/* Footer */}
-      <footer className="bg-gray-950 text-white mt-12 py-12 px-4">
+      <footer className="bg-gray-950 text-white mt-12 py-12 px-4 pb-24 md:pb-12">
         <div className="max-w-7xl mx-auto text-center">
           <img
             src="https://media.base44.com/images/public/69d519273be8cf966434f77a/9ac65c451_IMG_0066.png"
@@ -443,6 +497,7 @@ export default function Home() {
           <p className="text-gray-600 text-xs mt-2">Bukuria e ushqimit, shpejtësia e teknologjisë.</p>
         </div>
       </footer>
+      <MobileBottomNav cart={cart} />
     </div>
   );
 }
