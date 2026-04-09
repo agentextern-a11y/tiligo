@@ -72,6 +72,39 @@ function MapUpdater({ center }) {
   return null;
 }
 
+const TILIGO_LOGO = "https://media.base44.com/images/public/69d519273be8cf966434f77a/9ff7c0a46_IMG_0106.jpeg";
+
+const STATUS_MESSAGES = {
+  pranuar:          { title: "✅ Porosia u Pranua!",       body: "Biznesi konfirmoi porosinë tuaj. Po përgatitet..." },
+  ne_pergatitje:   { title: "👨‍🍳 Duke u Përgatitur!",      body: "Kuzhinieri po punon me porosinë tuaj." },
+  gati_per_dorezim:{ title: "📦 Gati për Dorëzim!",       body: "Porosia është gati. Po pritet dorëzuesi..." },
+  ne_rruge:        { title: "🛵 Dorëzuesi është Rrugës!",  body: "Porosia juaj po vjen drejt jush tani!" },
+  dorezuar:        { title: "🎉 Porosia u Dorëzua!",       body: "Ju urrojmë oreks! Faleminderit që zgjodhët TiliGo 💚" },
+  anuluar:         { title: "❌ Porosia u Anulua",          body: "Porosia juaj u anulua. Na kontaktoni për ndihmë." },
+};
+
+function requestNotifPermission() {
+  if ("Notification" in window && Notification.permission === "default") {
+    Notification.requestPermission();
+  }
+}
+
+function sendNotif(status) {
+  if (!("Notification" in window) || Notification.permission !== "granted") return;
+  const msg = STATUS_MESSAGES[status];
+  if (!msg) return;
+  const n = new Notification(msg.title, {
+    body: msg.body,
+    icon: TILIGO_LOGO,
+    badge: TILIGO_LOGO,
+    image: TILIGO_LOGO,
+    vibrate: [200, 100, 200],
+    requireInteraction: status === "ne_rruge" || status === "dorezuar",
+    tag: "tiligo-order",
+  });
+  n.onclick = () => { window.focus(); n.close(); };
+}
+
 export default function TrackOrder() {
   const { code: urlCode } = useParams();
   const savedCode = localStorage.getItem("tiligo_active_order");
@@ -86,11 +119,13 @@ export default function TrackOrder() {
   const [etaSeconds, setEtaSeconds] = useState(null);
   const [distanceKm, setDistanceKm] = useState(null);
   const countdownRef = useRef(null);
+  const prevStatusRef = useRef(null);
 
   // Delivery "live" simulation — moves toward user
   const deliveryMoveRef = useRef(null);
 
   useEffect(() => {
+    requestNotifPermission();
     if (code) loadOrder(code);
     else setLoading(false);
     // Redirect to tracking URL if loaded from localStorage
@@ -116,31 +151,13 @@ export default function TrackOrder() {
       if (event.data?.order_code === order.order_code) {
         const updated = event.data;
         setOrder(updated);
+        // Fire notification only on status change
+        if (updated.status !== prevStatusRef.current) {
+          sendNotif(updated.status);
+          prevStatusRef.current = updated.status;
+        }
         if (updated.status === "dorezuar" || updated.status === "anuluar") {
           localStorage.removeItem("tiligo_active_order");
-        }
-        // Push notification on status change
-        if ('Notification' in window && Notification.permission === 'granted') {
-          const msgs = {
-            pranuar:          '✅ Porosia u pranua nga biznesi!',
-            ne_pergatitje:    '👨‍🍳 Porosia juaj është duke u përgatitur...',
-            gati_per_dorezim: '📦 Porosia është gati për dorëzim!',
-            ne_rruge:         '🛵 Dorëzuesi është në rrugë drejt jush!',
-            dorezuar:         '🎉 Porosia u dorëzua me sukses! Mirë ju boftë!',
-            anuluar:          '❌ Porosia u anulua.',
-          };
-          const msg = msgs[updated.status];
-          if (msg) {
-            new Notification(`TiliGo — ${updated.order_code}`, {
-              body: msg,
-              icon: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/9ff7c0a46_IMG_0106.jpeg',
-              badge: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/9ff7c0a46_IMG_0106.jpeg',
-              tag: updated.order_code,
-              requireInteraction: updated.status === 'ne_rruge' || updated.status === 'dorezuar',
-              silent: false,
-              vibrate: [200, 100, 200],
-            });
-          }
         }
       }
     });
