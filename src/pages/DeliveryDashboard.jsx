@@ -1,6 +1,35 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ToggleLeft, ToggleRight, LogOut, Bell, CheckCircle, MapPin, Phone, TrendingUp, Star, Bike, Clock, Package, Settings, AlertTriangle } from "lucide-react";
+import { ToggleLeft, ToggleRight, LogOut, Bell, CheckCircle, MapPin, Phone, TrendingUp, Star, Bike, Clock, Package, Settings, AlertTriangle, Navigation } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import "leaflet/dist/leaflet.css";
+import L from "leaflet";
+
+delete L.Icon.Default.prototype._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png",
+});
+
+const makeIcon = (emoji, size = 36) => L.divIcon({
+  html: `<div style="font-size:${size}px;line-height:1;filter:drop-shadow(0 2px 6px rgba(0,0,0,0.4))">${emoji}</div>`,
+  className: "", iconAnchor: [size/2, size], popupAnchor: [0, -size],
+});
+
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2-lat1)*Math.PI/180;
+  const dLng = (lng2-lng1)*Math.PI/180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function MapCenter({ center }) {
+  const map = useMap();
+  useEffect(() => { if (center) map.flyTo(center, 15, { duration: 1 }); }, [center?.toString()]);
+  return null;
+}
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import TiliGoLogo from "@/components/TiliGoLogo";
@@ -20,10 +49,20 @@ export default function DeliveryDashboard() {
   const [tab, setTab] = useState("available");
   const [loading, setLoading] = useState(true);
   const [newOrder, setNewOrder] = useState(false);
+  const [driverCoords, setDriverCoords] = useState(null);
+  const gpsWatchRef = useRef(null);
 
   useEffect(() => {
     if (!driver) { navigate("/dorezuesi/login"); return; }
     loadOrders();
+    // Start GPS tracking
+    if (navigator.geolocation) {
+      gpsWatchRef.current = navigator.geolocation.watchPosition(
+        (pos) => setDriverCoords([pos.coords.latitude, pos.coords.longitude]),
+        null, { enableHighAccuracy: true, maximumAge: 5000 }
+      );
+    }
+    return () => { if (gpsWatchRef.current) navigator.geolocation.clearWatch(gpsWatchRef.current); };
   }, [driver]);
 
   useEffect(() => {
@@ -55,11 +94,20 @@ export default function DeliveryDashboard() {
   };
 
   const acceptOrder = async (order) => {
-    // Optimistic update
-    const updated = { ...order, status: "ne_rruge", delivery_id: driver.id, delivery_name: driver.name };
+    const updateData = { status: "ne_rruge", delivery_id: driver.id, delivery_name: driver.name };
+    if (driverCoords) { updateData.delivery_lat = driverCoords[0]; updateData.delivery_lng = driverCoords[1]; }
+    const updated = { ...order, ...updateData };
     setOrders(prev => prev.map(o => o.id === order.id ? updated : o));
-    await base44.entities.Order.update(order.id, { status: "ne_rruge", delivery_id: driver.id, delivery_name: driver.name });
+    await base44.entities.Order.update(order.id, updateData);
   };
+
+  // Broadcast driver GPS every 10s for active orders
+  useEffect(() => {
+    if (!driverCoords || myOrders.length === 0) return;
+    myOrders.forEach(order => {
+      base44.entities.Order.update(order.id, { delivery_lat: driverCoords[0], delivery_lng: driverCoords[1] });
+    });
+  }, [driverCoords]);
 
   const completeOrder = async (order) => {
     // Optimistic update
@@ -258,6 +306,13 @@ export default function DeliveryDashboard() {
                     <div className="flex items-center gap-2 text-sm text-gray-600 dark:text-gray-300 bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
                       <MapPin size={14} className="text-blue-600 flex-shrink-0" />
                       <span className="font-medium">{order.customer_address}</span>
+                      {order.customer_lat && (
+                        <a href={`https://www.google.com/maps/dir/?api=1&destination=${order.customer_lat},${order.customer_lng}`}
+                          target="_blank" rel="noopener noreferrer"
+                          className="ml-auto bg-blue-600 text-white text-xs font-bold px-2.5 py-1 rounded-lg flex items-center gap-1 hover:bg-blue-700">
+                          <Navigation size={10} /> Navigate
+                        </a>
+                      )}
                     </div>
                     <div className="flex items-center gap-2 text-sm bg-gray-50 dark:bg-gray-700 rounded-xl px-3 py-2">
                       <Phone size={14} className="text-green-600 flex-shrink-0" />
@@ -265,6 +320,31 @@ export default function DeliveryDashboard() {
                       <a href={`tel:${order.customer_phone}`} className="text-blue-600 font-black">{order.customer_phone}</a>
                     </div>
                   </div>
+
+                  {/* Live customer map */}
+                  {order.customer_lat && (
+                    <div className="rounded-xl overflow-hidden mb-4" style={{ height: 200 }}>
+                      <MapContainer center={[order.customer_lat, order.customer_lng]} zoom={15}
+                        style={{ height: "100%", width: "100%" }} zoomControl={false} scrollWheelZoom={false}>
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" attribution="" />
+                        <Marker position={[order.customer_lat, order.customer_lng]} icon={makeIcon("🏠", 32)}>
+                          <Popup><strong>{order.customer_name}</strong><br />{order.customer_address}</Popup>
+                        </Marker>
+                        {driverCoords && (
+                          <Marker position={driverCoords} icon={makeIcon("🛵", 36)}>
+                            <Popup>Pozicioni Juaj</Popup>
+                          </Marker>
+                        )}
+                        {driverCoords && <MapCenter center={undefined} />}
+                      </MapContainer>
+                    </div>
+                  )}
+                  {order.customer_lat && driverCoords && (
+                    <div className="bg-purple-50 rounded-xl px-4 py-2 mb-3 flex items-center justify-between text-sm">
+                      <span className="text-purple-700 font-medium">📍 Distanca nga klienti</span>
+                      <span className="font-black text-purple-800">{haversineKm(driverCoords[0],driverCoords[1],order.customer_lat,order.customer_lng).toFixed(2)} km · ~{Math.ceil(haversineKm(driverCoords[0],driverCoords[1],order.customer_lat,order.customer_lng)/30*60)} min</span>
+                    </div>
+                  )}
 
                   {/* Animated route */}
                   <div className="bg-gradient-to-r from-purple-50 via-gray-50 to-green-50 rounded-xl p-4 mb-4 flex items-center gap-3">

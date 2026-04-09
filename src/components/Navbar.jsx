@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { ShoppingCart, Package, User, Menu, X, ChevronDown, ArrowLeft } from "lucide-react";
+import { ShoppingCart, Package, User, Menu, X, ChevronDown, ArrowLeft, MapPin } from "lucide-react";
 import TiliGoLogo from "./TiliGoLogo";
 import MotoStrip from "./MotoStrip";
 import { motion, AnimatePresence } from "framer-motion";
@@ -12,6 +12,19 @@ const ROOT_PATHS = ["/", "/porositjet-e-mia", "/biznesi/login", "/dorezuesi/logi
 export default function Navbar({ cart = [], onCartClick }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [hyrjaOpen, setHyrjaOpen] = useState(false);
+  const [city, setCity] = useState("");
+
+  useEffect(() => {
+    if (!navigator.geolocation) return;
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&format=json`);
+        const data = await res.json();
+        const loc = data.address?.city || data.address?.town || data.address?.village || data.address?.county || "";
+        setCity(loc);
+      } catch {}
+    }, null, { maximumAge: 300000 });
+  }, []);
   const location = useLocation();
   const navigate = useNavigate();
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
@@ -22,8 +35,14 @@ export default function Navbar({ cart = [], onCartClick }) {
       style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--nav-border)', paddingTop: 'env(safe-area-inset-top)' }}>
       <MotoStrip />
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
-        <Link to="/">
+        <Link to="/" className="flex items-center gap-2">
           <TiliGoLogo size="md" />
+          {city && (
+            <span className="hidden sm:flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-full"
+              style={{ background: 'rgba(0,191,255,0.12)', color: 'var(--text-secondary)', border: '1px solid rgba(0,191,255,0.25)' }}>
+              <MapPin size={10} style={{ color: '#39FF6B' }} />{city}
+            </span>
+          )}
         </Link>
 
         {/* Desktop nav */}

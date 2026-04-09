@@ -14,6 +14,18 @@
     "customer_address": {
       "type": "string"
     },
+    "customer_lat": {
+      "type": "number"
+    },
+    "customer_lng": {
+      "type": "number"
+    },
+    "delivery_lat": {
+      "type": "number"
+    },
+    "delivery_lng": {
+      "type": "number"
+    },
     "items": {
       "type": "array",
       "items": {

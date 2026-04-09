@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, User, Banknote, CheckCircle, Copy } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, User, Banknote, CheckCircle, Copy, Crosshair, Loader } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
 import { useCart } from "@/lib/useCart";
@@ -14,6 +14,27 @@ export default function Checkout() {
   const navigate = useNavigate();
   const { cart, clearCart } = useCart();
   const [form, setForm] = useState({ name: "", phone: "", address: "", notes: "" });
+  const [gpsCoords, setGpsCoords] = useState(null);
+  const [gpsLoading, setGpsLoading] = useState(false);
+
+  const captureGPS = () => {
+    if (!navigator.geolocation) return;
+    setGpsLoading(true);
+    navigator.geolocation.getCurrentPosition(async (pos) => {
+      const { latitude, longitude } = pos.coords;
+      setGpsCoords({ lat: latitude, lng: longitude });
+      // Reverse geocode to fill address
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+        const data = await res.json();
+        const addr = data.address;
+        const street = [addr.road, addr.house_number].filter(Boolean).join(" ");
+        const city = addr.city || addr.town || addr.village || "";
+        if (street || city) setForm(f => ({ ...f, address: [street, city].filter(Boolean).join(", ") }));
+      } catch {}
+      setGpsLoading(false);
+    }, () => setGpsLoading(false));
+  };
   const [loading, setLoading] = useState(false);
   const [done, setDone] = useState(null);
   const [copied, setCopied] = useState(false);
@@ -37,6 +58,7 @@ export default function Checkout() {
       customer_name: form.name,
       customer_phone: form.phone,
       customer_address: form.address,
+      ...(gpsCoords ? { customer_lat: gpsCoords.lat, customer_lng: gpsCoords.lng } : {}),
       notes: form.notes,
       items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
       total,
@@ -187,10 +209,22 @@ export default function Checkout() {
             <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5 mb-1.5">
               <MapPin size={14} /> Adresa e Dorëzimit *
             </label>
-            <input value={form.address} onChange={e => setForm({...form, address: e.target.value})}
-              placeholder="Rruga, numri, qyteti"
-              className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
-              required />
+            <div className="flex gap-2">
+              <input value={form.address} onChange={e => setForm({...form, address: e.target.value})}
+                placeholder="Rruga, numri, qyteti"
+                className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50"
+                required />
+              <button type="button" onClick={captureGPS} disabled={gpsLoading}
+                title="Përdor GPS"
+                className="flex items-center gap-1.5 px-3 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors disabled:opacity-60 flex-shrink-0">
+                {gpsLoading ? <Loader size={16} className="animate-spin" /> : <Crosshair size={16} />}
+              </button>
+            </div>
+            {gpsCoords && (
+              <p className="text-xs text-green-600 font-medium mt-1 flex items-center gap-1">
+                <MapPin size={10} /> GPS i ruajtur · {gpsCoords.lat.toFixed(5)}, {gpsCoords.lng.toFixed(5)}
+              </p>
+            )}
           </div>
 
           <div>

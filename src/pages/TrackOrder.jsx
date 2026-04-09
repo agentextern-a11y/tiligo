@@ -40,10 +40,26 @@ const STATUS_LABELS = {
 // Kosovo bounding box center
 const KOSOVO_CENTER = [42.6629, 21.1655];
 
-// Estimate ETA based on current status
+// Haversine distance in km
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2)**2 + Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dLng/2)**2;
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+// Estimate ETA based on current status (fallback)
 function estimateETA(status) {
   const map = { e_re: 40, pranuar: 35, ne_pergatitje: 25, gati_per_dorezim: 15, ne_rruge: 8, dorezuar: 0 };
   return map[status] ?? null;
+}
+
+// Compute GPS-based ETA in seconds (30 km/h avg)
+function gpsETA(deliveryCoords, userCoords) {
+  if (!deliveryCoords || !userCoords) return null;
+  const km = haversineKm(deliveryCoords[0], deliveryCoords[1], userCoords[0], userCoords[1]);
+  return Math.round((km / 30) * 3600); // seconds
 }
 
 // Smooth map recenter on position change
@@ -65,6 +81,7 @@ export default function TrackOrder() {
   const [userCoords, setUserCoords] = useState(null);
   const [deliveryCoords, setDeliveryCoords] = useState(null);
   const [etaSeconds, setEtaSeconds] = useState(null);
+  const [distanceKm, setDistanceKm] = useState(null);
 
   // Delivery "live" simulation — moves toward user
   const deliveryMoveRef = useRef(null);
@@ -73,7 +90,7 @@ export default function TrackOrder() {
     if (code) loadOrder(code);
     else setLoading(false);
 
-    // Get user GPS
+    // Use order GPS coords if available, else get browser GPS
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         pos => setUserCoords([pos.coords.latitude, pos.coords.longitude]),
@@ -94,13 +111,27 @@ export default function TrackOrder() {
     return unsub;
   }, [order?.order_code]);
 
-  // Simulate delivery moving toward user when "ne_rruge"
+  // Use order GPS for customer coords if available
+  const effectiveUserCoords = (order?.customer_lat && order?.customer_lng)
+    ? [order.customer_lat, order.customer_lng]
+    : userCoords;
+
+  // Delivery moves toward customer; if order has delivery_lat/lng use those
   useEffect(() => {
-    if (order?.status === "ne_rruge" && userCoords) {
-      // Start delivery ~1.5km away from user in a random direction
+    if (order?.status === "ne_rruge" && effectiveUserCoords) {
+      // If order has real delivery GPS, use it; otherwise simulate
+      if (order.delivery_lat && order.delivery_lng) {
+        const dc = [order.delivery_lat, order.delivery_lng];
+        setDeliveryCoords(dc);
+        const realEta = gpsETA(dc, effectiveUserCoords);
+        setEtaSeconds(realEta);
+        const km = haversineKm(dc[0], dc[1], effectiveUserCoords[0], effectiveUserCoords[1]);
+        setDistanceKm(km);
+        return;
+      }
       const angle = Math.random() * 2 * Math.PI;
-      const startLat = userCoords[0] + Math.sin(angle) * 0.015;
-      const startLng = userCoords[1] + Math.cos(angle) * 0.020;
+      const startLat = effectiveUserCoords[0] + Math.sin(angle) * 0.015;
+      const startLng = effectiveUserCoords[1] + Math.cos(angle) * 0.020;
       setDeliveryCoords([startLat, startLng]);
 
       let step = 0;
@@ -108,21 +139,22 @@ export default function TrackOrder() {
       deliveryMoveRef.current = setInterval(() => {
         step++;
         const t = step / totalSteps;
-        const lat = startLat + (userCoords[0] - startLat) * t;
-        const lng = startLng + (userCoords[1] - startLng) * t;
+        const lat = startLat + (effectiveUserCoords[0] - startLat) * t;
+        const lng = startLng + (effectiveUserCoords[1] - startLng) * t;
         setDeliveryCoords([lat, lng]);
-        // Update ETA countdown
-        const remaining = Math.max(0, Math.round((1 - t) * (estimateETA("ne_rruge") * 60)));
-        setEtaSeconds(remaining);
+        const realEta = gpsETA([lat, lng], effectiveUserCoords);
+        setEtaSeconds(realEta !== null ? realEta : Math.max(0, Math.round((1 - t) * (estimateETA("ne_rruge") * 60))));
+        const km = haversineKm(lat, lng, effectiveUserCoords[0], effectiveUserCoords[1]);
+        setDistanceKm(km);
         if (step >= totalSteps) clearInterval(deliveryMoveRef.current);
-      }, 3000); // every 3s
+      }, 3000);
     } else {
       if (deliveryMoveRef.current) clearInterval(deliveryMoveRef.current);
       const eta = estimateETA(order?.status);
       if (eta !== null) setEtaSeconds(eta * 60);
     }
     return () => { if (deliveryMoveRef.current) clearInterval(deliveryMoveRef.current); };
-  }, [order?.status, userCoords]);
+  }, [order?.status, order?.delivery_lat, order?.delivery_lng, effectiveUserCoords]);
 
   const loadOrder = async (c) => {
     setLoading(true);
@@ -147,8 +179,8 @@ export default function TrackOrder() {
     return `~${m} min`;
   };
 
-  const routePoints = deliveryCoords && userCoords ? [deliveryCoords, userCoords] : [];
-  const mapCenter = deliveryCoords || userCoords || KOSOVO_CENTER;
+  const routePoints = deliveryCoords && effectiveUserCoords ? [deliveryCoords, effectiveUserCoords] : [];
+  const mapCenter = deliveryCoords || effectiveUserCoords || KOSOVO_CENTER;
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center bg-[#f0f4f8]">
@@ -287,11 +319,11 @@ export default function TrackOrder() {
                     <MapUpdater center={mapCenter} />
 
                     {/* User location */}
-                    {userCoords && (
-                      <Marker position={userCoords} icon={makeIcon("🏠", 32)}>
+                    {effectiveUserCoords && (
+                      <Marker position={effectiveUserCoords} icon={makeIcon("🏠", 32)}>
                         <Popup>
                           <strong>Lokacioni Juaj</strong><br />
-                          Adresa e dorëzimit
+                          {order?.customer_lat ? "📍 GPS i saktë" : "Adresa e dorëzimit"}
                         </Popup>
                       </Marker>
                     )}
@@ -328,11 +360,14 @@ export default function TrackOrder() {
                       </div>
                       <div>
                         <p className="font-bold text-purple-900 text-sm">Kohë e mbetur</p>
-                        <p className="text-purple-600 text-xs">{order.delivery_name} po ju sjell porosinë</p>
+                        <p className="text-purple-600 text-xs">
+                          {distanceKm ? `${distanceKm.toFixed(1)} km larg · ` : ""}{order.delivery_name} po ju sjell porosinë
+                        </p>
                       </div>
                     </div>
                     <div className="text-right">
                       <p className="font-black text-purple-700 text-xl">{formatETA(etaSeconds)}</p>
+                      {order.delivery_lat && <p className="text-xs text-green-600 font-bold">📍 GPS Live</p>}
                     </div>
                   </div>
                 )}
