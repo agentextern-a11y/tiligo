@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, Copy, CheckCircle, Clock, ChefHat, Bike, Package, MapPin, Navigation, Phone, Download } from "lucide-react";
+import { ArrowLeft, Copy, CheckCircle2, Timer, UtensilsCrossed, Truck, Package2, MapPinned, Compass, Download, Flame, Hourglass, Bike, Clock } from "lucide-react";
 import { generateOrderPDF } from "@/lib/pdfGenerator";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
@@ -25,12 +25,12 @@ const makeIcon = (emoji, size = 36) => L.divIcon({
 });
 
 const STATUS_STEPS = [
-  { key: "e_re",           label: "Porosia e Re",       icon: <Package size={16} />,   color: "bg-blue-500",   neon: "shadow-blue-400/60" },
-  { key: "pranuar",        label: "Pranuar",             icon: <CheckCircle size={16} />,color: "bg-indigo-500", neon: "shadow-indigo-400/60" },
-  { key: "ne_pergatitje",  label: "Në Përgatitje",       icon: <ChefHat size={16} />,   color: "bg-amber-500",  neon: "shadow-amber-400/60" },
-  { key: "gati_per_dorezim",label: "Gati për Dorëzim",  icon: <Package size={16} />,   color: "bg-orange-500", neon: "shadow-orange-400/60" },
-  { key: "ne_rruge",       label: "Në Rrugë 🛵",         icon: <Bike size={16} />,      color: "bg-purple-500", neon: "shadow-purple-400/60" },
-  { key: "dorezuar",       label: "Dorëzuar ✓",          icon: <CheckCircle size={16} />,color: "bg-green-500",  neon: "shadow-green-400/60" },
+  { key: "e_re",            label: "Porosia u dërgua",    icon: <Package2 size={15} />,        accent: '#60A5FA' },
+  { key: "pranuar",         label: "Pranuar nga biznesi", icon: <CheckCircle2 size={15} />,    accent: '#818CF8' },
+  { key: "ne_pergatitje",   label: "Duke u përgatitur",   icon: <UtensilsCrossed size={15} />, accent: '#FCD34D' },
+  { key: "gati_per_dorezim",label: "Gati për dorëzim",    icon: <Flame size={15} />,           accent: '#FB923C' },
+  { key: "ne_rruge",        label: "Dërgohet drejt jush", icon: <Truck size={15} />,           accent: '#A78BFA' },
+  { key: "dorezuar",        label: "Dorëzuar me sukses",  icon: <CheckCircle2 size={15} />,    accent: '#39FF6B' },
 ];
 
 const STATUS_LABELS = {
@@ -251,10 +251,13 @@ export default function TrackOrder() {
 
   if (loading) return (
     <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-body)' }}>
-      <div className="flex flex-col items-center gap-4">
-        <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="w-12 h-12 rounded-full" style={{ border: '4px solid rgba(57,255,107,0.2)', borderTopColor: '#39FF6B' }} />
-        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Duke ngarkuar...</p>
+      <div className="flex flex-col items-center gap-5">
+        <div className="relative">
+          <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1.2, ease: "linear" }}
+            className="w-14 h-14 rounded-full" style={{ border: '3px solid rgba(0,191,255,0.15)', borderTopColor: '#00BFFF' }} />
+          <div className="absolute inset-0 flex items-center justify-center text-xl">🛵</div>
+        </div>
+        <p className="text-sm font-medium" style={{ color: 'var(--text-muted)' }}>Duke gjurmuar...</p>
       </div>
     </div>
   );
@@ -262,23 +265,27 @@ export default function TrackOrder() {
   return (
     <div className="min-h-screen" style={{ background: 'var(--bg-body)' }}>
       {/* Header */}
-      <div className="sticky top-0 z-50 shadow-xl" style={{ background: 'var(--nav-bg)', borderBottom: '1px solid var(--nav-border)', backdropFilter: 'blur(20px)' }}>
+      <div className="sticky top-0 z-50" style={{ background: 'var(--nav-bg)', borderBottom: '1px solid var(--nav-border)', backdropFilter: 'blur(24px)' }}>
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
           <button onClick={() => navigate("/")}
-            className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
-            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid var(--nav-border)' }}>
-            <ArrowLeft size={18} style={{ color: 'var(--text-primary)' }} />
+            className="w-9 h-9 rounded-2xl flex items-center justify-center transition-all active:scale-90"
+            style={{ background: 'rgba(0,191,255,0.1)', border: '1px solid rgba(0,191,255,0.2)' }}>
+            <ArrowLeft size={17} style={{ color: '#00BFFF' }} />
           </button>
           <div className="flex-1">
-            <h1 className="font-black text-base" style={{ color: 'var(--text-heading)' }}>Gjurmo Porosinë</h1>
-            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>TiliGo Live Tracking</p>
+            <h1 className="font-black text-sm tracking-wide" style={{ color: 'var(--text-heading)' }}>GJURMO POROSINË</h1>
+            <p className="text-xs flex items-center gap-1" style={{ color: 'var(--text-muted)' }}>
+              <span className="w-1.5 h-1.5 rounded-full inline-block" style={{ background: order?.status === 'ne_rruge' ? '#39FF6B' : '#00BFFF', animation: order?.status === 'ne_rruge' ? 'pulse 1.5s infinite' : 'none' }} />
+              TiliGo · Live Tracking
+            </p>
           </div>
           {order?.status === "ne_rruge" && (
-            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full"
-              style={{ background: 'rgba(57,255,107,0.15)', border: '1px solid rgba(57,255,107,0.4)' }}>
-              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#39FF6B' }} />
-              <span className="text-xs font-bold" style={{ color: '#39FF6B' }}>Live</span>
-            </div>
+            <motion.div animate={{ scale: [1, 1.05, 1] }} transition={{ repeat: Infinity, duration: 2 }}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full"
+              style={{ background: 'linear-gradient(135deg,rgba(57,255,107,0.2),rgba(0,191,255,0.1))', border: '1px solid rgba(57,255,107,0.5)' }}>
+              <Truck size={12} style={{ color: '#39FF6B' }} />
+              <span className="text-xs font-black" style={{ color: '#39FF6B' }}>LIVE</span>
+            </motion.div>
           )}
         </div>
       </div>
@@ -286,20 +293,28 @@ export default function TrackOrder() {
       <div className="max-w-lg mx-auto px-4 py-5 space-y-4">
         {/* Search */}
         {!code && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
-            <h2 className="font-bold mb-3" style={{ color: 'var(--text-heading)' }}>Fut Kodin e Porosisë</h2>
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }}
+            className="rounded-3xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+            <div className="flex items-center gap-3 mb-5">
+              <div className="w-10 h-10 rounded-2xl flex items-center justify-center" style={{ background: 'rgba(0,191,255,0.15)', border: '1px solid rgba(0,191,255,0.3)' }}>
+                <Compass size={18} style={{ color: '#00BFFF' }} />
+              </div>
+              <div>
+                <h2 className="font-black text-sm" style={{ color: 'var(--text-heading)' }}>KODI I POROSISË</h2>
+                <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Fut kodin për të gjurmuar</p>
+              </div>
+            </div>
             <div className="flex gap-2">
               <input
                 value={searchCode}
                 onChange={e => setSearchCode(e.target.value.toUpperCase())}
                 placeholder="p.sh. TG-ABC12"
-                className="flex-1 rounded-xl px-4 py-3 text-sm outline-none font-mono"
-                style={{ background: 'var(--input-bg)', border: '1.5px solid var(--card-border)', color: 'var(--text-primary)' }}
+                className="flex-1 rounded-2xl px-4 py-3 text-sm outline-none font-mono tracking-widest"
+                style={{ background: 'rgba(0,40,80,0.5)', border: '1.5px solid rgba(0,191,255,0.25)', color: 'var(--text-primary)' }}
               />
               <button onClick={() => loadOrder(searchCode)}
-                className="px-5 py-3 rounded-xl font-bold text-sm transition-all"
-                style={{ background: 'linear-gradient(135deg,#39FF6B,#00BFFF)', color: '#020c1b' }}>
+                className="px-5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95"
+                style={{ background: 'linear-gradient(135deg,#39FF6B,#00BFFF)', color: '#020c1b', boxShadow: '0 0 16px rgba(57,255,107,0.3)' }}>
                 Kërko
               </button>
             </div>
@@ -307,121 +322,122 @@ export default function TrackOrder() {
         )}
 
         {!order && !loading && (
-          <div className="text-center py-16">
-            <div className="text-7xl mb-4">🔍</div>
-            <p className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Porosia nuk u gjet</p>
+          <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+            className="text-center py-16">
+            <div className="w-20 h-20 rounded-3xl mx-auto mb-5 flex items-center justify-center text-4xl"
+              style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.25)' }}>🔍</div>
+            <p className="font-black text-base" style={{ color: 'var(--text-primary)' }}>Porosia nuk u gjet</p>
             <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Kontrolloni kodin dhe provoni sërisht</p>
-          </div>
+          </motion.div>
         )}
 
         {order && (
           <>
-            {/* ─── HERO: Logo circle + Countdown + Receipt ─── */}
-            <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-3xl overflow-hidden shadow-xl"
-              style={{ background: 'linear-gradient(135deg,#020c1b,#0a2a4a)', border: '1.5px solid rgba(0,191,255,0.3)' }}>
-              <div className="flex flex-col items-center pt-7 pb-5 px-5">
+            {/* ─── HERO CARD ─── */}
+            <motion.div initial={{ opacity: 0, y: -16 }} animate={{ opacity: 1, y: 0 }}
+              className="rounded-3xl overflow-hidden relative"
+              style={{ background: 'linear-gradient(160deg,#020c1b 0%,#0a2a4a 50%,#001830 100%)', border: '1px solid rgba(0,191,255,0.2)' }}>
 
-                {/* Animated TiliGo logo circle */}
-                <div className="relative mb-4">
-                  {[1,2,3].map((r, i) => (
-                    <motion.div key={i}
-                      className="absolute rounded-full border"
-                      style={{ inset: -(r*10), borderColor: i===0 ? '#39FF6B' : '#00BFFF', opacity: 0.25 - i*0.06 }}
-                      animate={{ scale: [1, 1.1, 1], opacity: [0.25-i*0.06, 0.08, 0.25-i*0.06] }}
-                      transition={{ repeat: Infinity, duration: 2 + i*0.5, delay: i*0.4 }}
-                    />
-                  ))}
-                  <motion.div
-                    className="w-20 h-20 rounded-full flex items-center justify-center overflow-hidden relative z-10"
-                    style={{ background: 'linear-gradient(135deg,#39FF6B22,#00BFFF22)', border: '2.5px solid #39FF6B', boxShadow: '0 0 28px rgba(57,255,107,0.5)' }}
-                    animate={{ rotate: order?.status === "ne_rruge" ? 360 : 0 }}
-                    transition={{ repeat: order?.status === "ne_rruge" ? Infinity : 0, duration: 8, ease: "linear" }}
-                  >
-                    <picture>
-                      <source srcSet="https://media.base44.com/images/public/69d519273be8cf966434f77a/9ff7c0a46_IMG_0106.jpeg" media="(prefers-color-scheme: dark)" />
-                      <img src="https://media.base44.com/images/public/69d519273be8cf966434f77a/9ff7c0a46_IMG_0106.jpeg" alt="TiliGo" className="w-16 h-16 object-cover rounded-full" />
-                    </picture>
-                  </motion.div>
+              {/* Decorative blur blobs */}
+              <div className="absolute top-0 right-0 w-40 h-40 rounded-full opacity-20 pointer-events-none"
+                style={{ background: 'radial-gradient(circle,#39FF6B,transparent 70%)', transform: 'translate(30%,-30%)' }} />
+              <div className="absolute bottom-0 left-0 w-32 h-32 rounded-full opacity-15 pointer-events-none"
+                style={{ background: 'radial-gradient(circle,#00BFFF,transparent 70%)', transform: 'translate(-30%,30%)' }} />
+
+              <div className="relative z-10 p-6">
+                {/* Top row: icon + status */}
+                <div className="flex items-center gap-4 mb-5">
+                  <div className="relative flex-shrink-0">
+                    {order.status === "ne_rruge" && (
+                      <motion.div className="absolute inset-0 rounded-3xl"
+                        animate={{ boxShadow: ['0 0 0 0 rgba(57,255,107,0.5)', '0 0 0 12px rgba(57,255,107,0)', '0 0 0 0 rgba(57,255,107,0)'] }}
+                        transition={{ repeat: Infinity, duration: 2 }} />
+                    )}
+                    <div className="w-16 h-16 rounded-3xl overflow-hidden flex-shrink-0"
+                      style={{ border: '2px solid rgba(57,255,107,0.5)', boxShadow: '0 0 20px rgba(57,255,107,0.25)' }}>
+                      <img src="https://media.base44.com/images/public/69d519273be8cf966434f77a/9ff7c0a46_IMG_0106.jpeg"
+                        alt="TiliGo" className="w-full h-full object-cover" />
+                    </div>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#00BFFF' }}>TiliGo Express</p>
+                    <h2 className="font-black text-lg leading-tight" style={{ color: 'var(--text-heading)' }}>
+                      {order.status === "dorezuar" ? "✅ Dorëzuar!" : order.status === "anuluar" ? "❌ Anuluar" : "⚡ Në rrugë..."}
+                    </h2>
+                    <p className="text-xs mt-0.5" style={{ color: 'var(--text-muted)' }}>{order.business_name}</p>
+                  </div>
+                  {order.status !== "dorezuar" && order.status !== "anuluar" && (
+                    <div className="flex-shrink-0 text-right">
+                      <motion.p key={Math.floor(etaSeconds/60)} initial={{ scale: 1.3, opacity: 0.5 }} animate={{ scale: 1, opacity: 1 }}
+                        className="font-black" style={{ fontSize: 34, color: '#39FF6B', textShadow: '0 0 20px rgba(57,255,107,0.5)', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
+                        {etaSeconds !== null ? (etaSeconds <= 0 ? "–" : `${String(Math.floor(etaSeconds/60)).padStart(2,"0")}:${String(etaSeconds%60).padStart(2,"0")}`) : "–"}
+                      </motion.p>
+                      <p className="text-xs font-medium" style={{ color: 'rgba(125,211,252,0.6)' }}>min</p>
+                    </div>
+                  )}
+                  {order.status === "dorezuar" && <div className="text-4xl flex-shrink-0">🎉</div>}
                 </div>
 
-                {/* Status label */}
-                <p className="text-xs font-bold tracking-widest uppercase mb-1" style={{ color: '#00BFFF' }}>
-                  {order.status === "dorezuar" ? "✅ Dorëzuar me sukses!" : "⚡ Duke gjurmuar live..."}
-                </p>
-
-                {/* Countdown */}
-                {etaSeconds !== null && order.status !== "dorezuar" && order.status !== "anuluar" && (
-                  <div className="text-center mb-3">
-                    <motion.p
-                      key={Math.floor(etaSeconds / 60)}
-                      initial={{ scale: 1.2, opacity: 0.7 }} animate={{ scale: 1, opacity: 1 }}
-                      className="font-black leading-none"
-                      style={{ fontSize: 56, color: '#39FF6B', textShadow: '0 0 30px rgba(57,255,107,0.6)', fontVariantNumeric: 'tabular-nums' }}
-                    >
-                      {etaSeconds <= 0 ? "00:00" : `${String(Math.floor(etaSeconds / 60)).padStart(2,"0")}:${String(etaSeconds % 60).padStart(2,"0")}`}
-                    </motion.p>
-                    <p className="text-xs font-bold mt-1" style={{ color: 'rgba(125,211,252,0.7)' }}>minuta të mbetur</p>
+                {/* Info pills row */}
+                <div className="flex gap-2 flex-wrap mb-5">
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                    style={{ background: 'rgba(0,191,255,0.12)', border: '1px solid rgba(0,191,255,0.25)', color: '#00BFFF' }}>
+                    <MapPinned size={11} /> {order.customer_address?.split(',')[0]}
                   </div>
-                )}
+                  <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                    style={{ background: 'rgba(57,255,107,0.12)', border: '1px solid rgba(57,255,107,0.25)', color: '#39FF6B' }}>
+                    💰 {order.total?.toFixed(2)}€
+                  </div>
+                  {order.delivery_name && (
+                    <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold"
+                      style={{ background: 'rgba(167,139,250,0.12)', border: '1px solid rgba(167,139,250,0.25)', color: '#A78BFA' }}>
+                      <Truck size={11} /> {order.delivery_name}
+                    </div>
+                  )}
+                </div>
 
-                {order.status === "dorezuar" && (
-                  <p className="text-4xl mb-2">🎉</p>
-                )}
-
-                {/* Receipt download button */}
-                <button
-                  onClick={() => generateOrderPDF(order)}
-                  className="flex items-center gap-2 px-5 py-2.5 rounded-2xl font-bold text-sm transition-all hover:scale-105 active:scale-95 mt-1"
-                  style={{ background: 'linear-gradient(135deg,#39FF6B,#00BFFF)', color: '#020c1b', boxShadow: '0 0 20px rgba(57,255,107,0.3)' }}
-                >
+                {/* Download button */}
+                <button onClick={() => generateOrderPDF(order)}
+                  className="w-full flex items-center justify-center gap-2.5 py-3 rounded-2xl font-black text-sm transition-all active:scale-95"
+                  style={{ background: 'linear-gradient(135deg,#39FF6B,#00BFFF)', color: '#020c1b', boxShadow: '0 0 20px rgba(57,255,107,0.25)' }}>
                   <Download size={15} /> Shkarko Faturën PDF
                 </button>
               </div>
             </motion.div>
 
-            {/* Order header */}
+            {/* Order code card */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="rounded-2xl overflow-hidden" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
-              <div className="px-5 py-4" style={{ background: 'linear-gradient(135deg,#020c1b,#0a2a4a)', borderBottom: '1px solid rgba(0,191,255,0.2)' }}>
-                <div className="flex items-center justify-between">
+              className="rounded-3xl overflow-hidden" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+              <div className="px-5 py-4 flex items-center justify-between"
+                style={{ borderBottom: '1px solid var(--divider)' }}>
+                <div className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0"
+                    style={{ background: 'rgba(251,191,36,0.15)', border: '1px solid rgba(251,191,36,0.3)' }}>
+                    <Hourglass size={16} style={{ color: '#FBBF24' }} />
+                  </div>
                   <div>
-                    <p className="text-xs mb-0.5" style={{ color: 'var(--text-secondary)' }}>Kodi i Porosisë</p>
-                    <p className="text-3xl font-black tracking-wide" style={{ color: '#FBBF24' }}>{order.order_code}</p>
+                    <p className="text-xs" style={{ color: 'var(--text-muted)' }}>Kodi i Porosisë</p>
+                    <p className="font-black text-xl tracking-wider" style={{ color: '#FBBF24' }}>{order.order_code}</p>
                   </div>
-                  <button onClick={copyCode}
-                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-colors"
-                    style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: '1px solid var(--nav-border)' }}>
-                    <Copy size={13} /> {copied ? "✓ Kopjuar" : "Kopjo"}
-                  </button>
                 </div>
-                <div className="mt-3 flex items-center gap-2">
-                  <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: order.status === 'dorezuar' ? '#39FF6B' : order.status === 'anuluar' ? '#EF4444' : '#FBBF24' }} />
-                  <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{STATUS_LABELS[order.status]}</span>
-                  {etaSeconds !== null && order.status !== "dorezuar" && order.status !== "anuluar" && (
-                    <span className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
-                      style={{ background: 'rgba(57,255,107,0.15)', color: '#39FF6B', border: '1px solid rgba(57,255,107,0.3)' }}>
-                      <Clock size={11} /> {formatETA(etaSeconds)}
-                    </span>
-                  )}
-                </div>
+                <button onClick={copyCode}
+                  className="flex items-center gap-1.5 text-xs font-bold px-3.5 py-2 rounded-2xl transition-all active:scale-90"
+                  style={copied
+                    ? { background: 'rgba(57,255,107,0.2)', color: '#39FF6B', border: '1px solid rgba(57,255,107,0.4)' }
+                    : { background: 'rgba(255,255,255,0.07)', color: 'var(--text-secondary)', border: '1px solid var(--nav-border)' }}>
+                  <Copy size={12} /> {copied ? "✓ Kopjuar" : "Kopjo"}
+                </button>
               </div>
-
-              {/* Business + Address */}
-              <div className="px-5 py-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">🏪</span>
-                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{order.business_name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <MapPin size={14} className="flex-shrink-0" style={{ color: '#00BFFF' }} />
-                  <span style={{ color: 'var(--text-secondary)' }}>{order.customer_address}</span>
-                </div>
-                {order.delivery_name && (
-                  <div className="flex items-center gap-2">
-                    <Bike size={14} className="flex-shrink-0" style={{ color: '#39FF6B' }} />
-                    <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{order.delivery_name} — Dorëzuesi juaj</span>
-                  </div>
+              <div className="px-5 py-3 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full"
+                  style={{ background: order.status==='dorezuar' ? '#39FF6B' : order.status==='anuluar' ? '#EF4444' : '#FBBF24',
+                    animation: order.status!=='dorezuar' && order.status!=='anuluar' ? 'pulse 1.5s infinite' : 'none' }} />
+                <span className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{STATUS_LABELS[order.status]}</span>
+                {etaSeconds !== null && order.status !== "dorezuar" && order.status !== "anuluar" && (
+                  <span className="ml-auto flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold"
+                    style={{ background: 'rgba(57,255,107,0.12)', color: '#39FF6B', border: '1px solid rgba(57,255,107,0.25)' }}>
+                    <Timer size={11} /> {formatETA(etaSeconds)}
+                  </span>
                 )}
               </div>
             </motion.div>
@@ -429,16 +445,18 @@ export default function TrackOrder() {
             {/* ===== REAL KOSOVO MAP ===== */}
             {userCoords && (
               <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
-                className="rounded-2xl overflow-hidden" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                className="rounded-3xl overflow-hidden" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
                 <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-                  <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--text-heading)' }}>
-                    <Navigation size={16} style={{ color: '#00BFFF' }} />
-                    {order.status === "ne_rruge" ? "Dorëzuesi Juaj · Live" : "Lokacioni Juaj"}
+                  <h3 className="font-black text-xs tracking-widest uppercase flex items-center gap-2" style={{ color: 'var(--text-heading)' }}>
+                    <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: 'rgba(0,191,255,0.15)' }}>
+                      <Compass size={14} style={{ color: '#00BFFF' }} />
+                    </div>
+                    {order.status === "ne_rruge" ? "Dorëzuesi · Live" : "Lokacioni Juaj"}
                   </h3>
                   {order.status === "ne_rruge" && deliveryCoords && (
                     <span className="text-xs font-bold flex items-center gap-1 px-2.5 py-1 rounded-full"
                       style={{ background: 'rgba(57,255,107,0.15)', color: '#39FF6B', border: '1px solid rgba(57,255,107,0.3)' }}>
-                      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#39FF6B' }} /> Lëviz Drejt Jush
+                      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#39FF6B' }} /> Lëviz Live
                     </span>
                   )}
                 </div>
@@ -524,51 +542,56 @@ export default function TrackOrder() {
 
             {/* Progress steps */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
-              <h3 className="font-bold mb-5" style={{ color: 'var(--text-heading)' }}>Progresi i Porosisë</h3>
-              <div className="space-y-1">
+              className="rounded-3xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: 'rgba(57,255,107,0.15)' }}>
+                  <CheckCircle2 size={14} style={{ color: '#39FF6B' }} />
+                </div>
+                <h3 className="font-black text-xs tracking-widest uppercase" style={{ color: 'var(--text-heading)' }}>Progresi i Porosisë</h3>
+              </div>
+              <div className="space-y-0">
                 {STATUS_STEPS.map((step, i) => {
                   const isActive = i === currentStep;
                   const isDone = i < currentStep;
                   return (
-                    <div key={step.key} className="flex items-center gap-3">
-                      <div className="flex flex-col items-center">
+                    <div key={step.key} className="flex items-stretch gap-4">
+                      {/* Timeline column */}
+                      <div className="flex flex-col items-center w-9 flex-shrink-0">
                         <motion.div
-                          animate={isActive ? { scale: [1, 1.2, 1] } : {}}
-                          transition={{ repeat: isActive ? Infinity : 0, duration: 1.5 }}
-                          className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500"
+                          animate={isActive ? { scale: [1, 1.15, 1] } : {}}
+                          transition={{ repeat: isActive ? Infinity : 0, duration: 1.8 }}
+                          className="w-9 h-9 rounded-2xl flex items-center justify-center flex-shrink-0 z-10"
                           style={isDone
-                            ? { background: 'linear-gradient(135deg,#39FF6B,#00cc5a)', color: '#020c1b', boxShadow: '0 0 12px rgba(57,255,107,0.4)' }
+                            ? { background: 'rgba(57,255,107,0.2)', color: '#39FF6B', border: '1.5px solid rgba(57,255,107,0.5)' }
                             : isActive
-                            ? { background: 'linear-gradient(135deg,#00BFFF,#0066FF)', color: '#fff', boxShadow: '0 0 16px rgba(0,191,255,0.5)' }
-                            : { background: 'rgba(0,40,80,0.5)', color: 'rgba(125,211,252,0.3)' }}
+                            ? { background: `rgba(${step.accent === '#39FF6B' ? '57,255,107' : step.accent === '#A78BFA' ? '167,139,250' : '0,191,255'},0.2)`, color: step.accent, border: `1.5px solid ${step.accent}`, boxShadow: `0 0 14px ${step.accent}55` }
+                            : { background: 'rgba(0,30,60,0.5)', color: 'rgba(125,211,252,0.2)', border: '1.5px solid rgba(0,60,120,0.3)' }}
                         >
-                          {isDone ? <CheckCircle size={18} /> : step.icon}
+                          {isDone ? <CheckCircle2 size={15} /> : step.icon}
                         </motion.div>
                         {i < STATUS_STEPS.length - 1 && (
-                          <div className="w-0.5 h-5 my-0.5 transition-colors duration-500"
-                            style={{ background: i < currentStep ? '#39FF6B' : 'rgba(0,60,120,0.5)' }} />
+                          <div className="w-px flex-1 my-1 rounded-full"
+                            style={{ background: i < currentStep
+                              ? 'linear-gradient(to bottom, rgba(57,255,107,0.6), rgba(57,255,107,0.1))'
+                              : 'rgba(0,60,120,0.3)', minHeight: 16 }} />
                         )}
                       </div>
-                      <div className="flex-1 py-2">
-                        <p className="text-sm font-bold transition-colors"
-                          style={{ color: isActive ? 'var(--text-heading)' : isDone ? 'var(--text-secondary)' : 'rgba(125,211,252,0.25)' }}>
+                      {/* Content */}
+                      <div className="flex items-center justify-between flex-1 pb-4 pt-1">
+                        <p className="text-sm font-bold"
+                          style={{ color: isActive ? 'var(--text-heading)' : isDone ? 'var(--text-secondary)' : 'rgba(125,211,252,0.2)' }}>
                           {step.label}
                         </p>
+                        {isActive && (
+                          <motion.div animate={{ opacity: [1, 0.4, 1] }} transition={{ repeat: Infinity, duration: 1.4 }}
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-black"
+                            style={{ background: `${step.accent}22`, color: step.accent, border: `1px solid ${step.accent}44` }}>
+                            <span className="w-1.5 h-1.5 rounded-full" style={{ background: step.accent }} />
+                            Tani
+                          </motion.div>
+                        )}
+                        {isDone && <CheckCircle2 size={14} style={{ color: '#39FF6B', opacity: 0.7 }} />}
                       </div>
-                      {isActive && (
-                        <motion.span
-                          animate={{ opacity: [1, 0.5, 1] }}
-                          transition={{ repeat: Infinity, duration: 1.2 }}
-                          className="text-xs px-2.5 py-1 rounded-full font-bold"
-                          style={{ background: 'rgba(0,191,255,0.15)', color: '#00BFFF', border: '1px solid rgba(0,191,255,0.3)' }}
-                        >
-                          Tani
-                        </motion.span>
-                      )}
-                      {isDone && (
-                        <span className="text-xs font-bold" style={{ color: '#39FF6B' }}>✓</span>
-                      )}
                     </div>
                   );
                 })}
@@ -577,8 +600,13 @@ export default function TrackOrder() {
 
             {/* Order summary */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-              className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
-              <h3 className="font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Detajet e Porosisë</h3>
+              className="rounded-3xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+              <div className="flex items-center gap-2 mb-4">
+                <div className="w-7 h-7 rounded-xl flex items-center justify-center" style={{ background: 'rgba(251,191,36,0.15)' }}>
+                  <UtensilsCrossed size={14} style={{ color: '#FBBF24' }} />
+                </div>
+                <h3 className="font-black text-xs tracking-widest uppercase" style={{ color: 'var(--text-heading)' }}>Detajet e Porosisë</h3>
+              </div>
               <div className="space-y-2 text-sm mb-3">
                 {order.items?.map((item, i) => (
                   <div key={i} className="flex justify-between py-1" style={{ borderBottom: '1px solid var(--divider)' }}>
