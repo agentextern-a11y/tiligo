@@ -167,7 +167,8 @@ export default function Home() {
 
   return (
     <div
-      className="min-h-screen bg-[#f0f4f8] dark:bg-gray-950"
+      className="min-h-screen"
+      style={{ background: 'var(--bg-page)' }}
       onTouchStart={ptr.onTouchStart}
       onTouchMove={ptr.onTouchMove}
       onTouchEnd={ptr.onTouchEnd}
@@ -370,7 +371,7 @@ export default function Home() {
       </section>
 
       {/* Stats bar */}
-      <section className="border-b shadow-sm" style={{ background: 'linear-gradient(90deg, #020c1b 0%, #0a2a4a 50%, #020c1b 100%)', borderColor: 'rgba(0,180,216,0.2)' }}>
+      <section className="border-b shadow-sm" style={{ background: 'var(--section-bg)', borderColor: 'var(--divider)' }}>
         <div className="max-w-5xl mx-auto px-4 py-4 grid grid-cols-3 gap-4">
           {[
             { icon: <Zap size={20} className="text-amber-500" />, title: "Dërgim Express", sub: "20–35 min mesatarisht" },
@@ -418,14 +419,14 @@ export default function Home() {
         </div>
 
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="biz-grid">
             {[1,2,3,4,5,6].map(i => (
-              <div key={i} className="rounded-2xl overflow-hidden animate-pulse" style={{ background: 'rgba(8,22,48,0.8)' }}>
-                <div className="h-44 bg-gray-200" />
+              <div key={i} className={`rounded-2xl overflow-hidden animate-pulse ${i === 0 ? 'biz-featured' : ''}`}
+                style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+                <div className="h-44" style={{ background: 'var(--stat-bg)' }} />
                 <div className="p-4 space-y-2">
-                  <div className="h-5 bg-gray-200 rounded w-2/3" />
-                  <div className="h-4 bg-gray-200 rounded w-full" />
-                  <div className="h-4 bg-gray-200 rounded w-1/2" />
+                  <div className="h-5 rounded w-2/3" style={{ background: 'var(--stat-bg)' }} />
+                  <div className="h-4 rounded w-1/2" style={{ background: 'var(--stat-bg)' }} />
                 </div>
               </div>
             ))}
@@ -433,54 +434,53 @@ export default function Home() {
         ) : filtered.length === 0 ? (
           <div className="text-center py-20">
             <div className="text-6xl mb-4">🔍</div>
-            <p className="text-gray-500 text-lg font-medium">Nuk u gjetën dyqane</p>
-            <p className="text-gray-400 mt-1">Provoni një kërkim tjetër</p>
+            <p className="text-lg font-medium" style={{ color: 'var(--text-muted)' }}>Nuk u gjetën dyqane</p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="biz-grid">
             {filtered.map((biz, i) => (
               <motion.div
                 key={biz.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                whileHover={{ y: -4 }}
+                className={i === 0 || (i % 7 === 3) ? 'biz-featured' : ''}
+                initial={{ opacity: 0, y: 24 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: '-40px' }}
+                transition={{ duration: 0.45, delay: (i % 4) * 0.07, ease: [0.16,1,0.3,1] }}
+                whileHover={{ y: -4, scale: 1.015 }}
               >
-                <Link to={`/dyqani/${biz.id}`} className="block">
-                  <div className="rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-500" style={{ background: 'rgba(8,22,48,0.9)', border: '1px solid rgba(0,180,216,0.2)' }}>
-                    <div className="relative h-44 overflow-hidden">
+                <Link to={`/dyqani/${biz.id}`} className="block h-full">
+                  <div className="tiligo-card rounded-2xl overflow-hidden h-full flex flex-col shadow-sm">
+                    <div className="relative overflow-hidden" style={{ height: i === 0 || (i % 7 === 3) ? 200 : 160 }}>
                       <img
-                        src={biz.image_url || `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80`}
+                        src={biz.image_url || `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=500&q=80`}
                         alt={biz.name}
-                        className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-500"
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                      <div className="absolute top-3 right-3">
-                        <span className="bg-amber-500 text-white text-xs font-black px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
-                          <Star size={10} fill="white" /> {biz.rating?.toFixed(1) || "4.5"}
-                        </span>
-                      </div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
+                      <span className="absolute top-2.5 right-2.5 bg-amber-500 text-white text-[11px] font-black px-2 py-0.5 rounded-full flex items-center gap-1 shadow">
+                        <Star size={9} fill="white" /> {biz.rating?.toFixed(1) || "4.5"}
+                      </span>
                       {biz.is_open ? (
-                        <div className="absolute top-3 left-3 bg-green-500 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1 shadow-md">
+                        <span className="absolute top-2.5 left-2.5 bg-emerald-500 text-white text-[11px] font-bold px-2 py-0.5 rounded-full flex items-center gap-1">
                           <span className="w-1.5 h-1.5 bg-white rounded-full animate-pulse" /> Hapur
-                        </div>
+                        </span>
                       ) : (
-                        <div className="absolute top-3 left-3 bg-gray-700/80 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                        <span className="absolute top-2.5 left-2.5 bg-black/60 text-white text-[11px] font-bold px-2 py-0.5 rounded-full">
                           Mbyllur
-                        </div>
+                        </span>
                       )}
                     </div>
-                    <div className="p-4">
-                      <h3 className="font-black text-sky-100 text-base mb-1">{biz.name}</h3>
-                      <p className="text-sky-300/60 text-sm line-clamp-2 mb-3">{biz.description}</p>
-                      <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
-                        <span className="flex items-center gap-1 font-medium text-sky-300">
-                          <Clock size={11} />{biz.delivery_time || "20-35 min"}
+                    <div className="p-3 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h3 className="font-black text-sm leading-tight mb-0.5" style={{ color: 'var(--text-heading)' }}>{biz.name}</h3>
+                        <p className="text-xs line-clamp-1" style={{ color: 'var(--text-muted)' }}>{biz.description}</p>
+                      </div>
+                      <div className="flex items-center gap-2 mt-2 text-[11px] flex-wrap" style={{ color: 'var(--text-secondary)' }}>
+                        <span className="flex items-center gap-0.5 font-semibold">
+                          <Clock size={10} />{biz.delivery_time || "25 min"}
                         </span>
-                        <span className="w-1 h-1 bg-cyan-700 rounded-full" />
-                        <span className="text-sky-300/70">Dërgesa <strong className="text-cyan-300">{biz.delivery_fee?.toFixed(2) || "1.50"}€</strong></span>
-                        <span className="w-1 h-1 bg-cyan-700 rounded-full" />
-                        <span className="text-sky-300/70">Min. <strong className="text-cyan-300">{biz.min_order?.toFixed(0) || "3"}€</strong></span>
+                        <span className="opacity-40">·</span>
+                        <span><strong>{biz.delivery_fee?.toFixed(2) || "1.50"}€</strong> dërgesa</span>
                       </div>
                     </div>
                   </div>
