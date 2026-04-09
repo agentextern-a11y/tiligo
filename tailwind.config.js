@@ -4,8 +4,10 @@ module.exports = {
   content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   safelist: [
     'bg-blue-600', 'bg-green-600', 'bg-amber-500', 'bg-red-500',
-    'text-blue-600', 'text-green-600', 'text-amber-500', 'text-red-500',
-    'border-blue-600', 'border-green-600',
+    'bg-orange-500', 'bg-orange-600', 'bg-teal-500',
+    'text-blue-600', 'text-green-600', 'text-amber-500', 'text-red-500', 'text-orange-500',
+    'border-blue-600', 'border-green-600', 'border-orange-400',
+    'scale-105', 'shimmer-text',
   ],
   theme: {
     extend: {

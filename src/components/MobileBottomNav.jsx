@@ -15,7 +15,7 @@ export default function MobileBottomNav() {
   const cartCount = (cart || []).reduce((s, i) => s + i.qty, 0);
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800"
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-md dark:bg-gray-900/95 border-t border-orange-100 dark:border-gray-800"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}>
       <div className="flex">
         {TABS.map(({ path, label, icon: Icon }) => {
@@ -27,12 +27,14 @@ export default function MobileBottomNav() {
                 {isActive && (
                   <motion.div
                     layoutId="nav-pill"
-                    className="absolute inset-0 -m-2 bg-blue-50 dark:bg-blue-900/30 rounded-xl"
+                    className="absolute inset-0 -m-2 rounded-xl"
+                    style={{ background: 'linear-gradient(135deg,rgba(249,115,22,0.15),rgba(251,191,36,0.15))' }}
                     transition={{ type: "spring", stiffness: 380, damping: 30 }}
                   />
                 )}
                 <Icon size={22}
-                  className={`relative z-10 transition-colors ${isActive ? "text-blue-700 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`}
+                  className={`relative z-10 transition-all duration-300 ${isActive ? "scale-110" : "scale-100"}`}
+                  style={{ color: isActive ? '#f97316' : undefined }}
                 />
                 {path === "/porositjet-e-mia" && cartCount > 0 && (
                   <span className="absolute -top-1.5 -right-1.5 bg-amber-500 text-white text-[9px] font-black rounded-full w-4 h-4 flex items-center justify-center z-20">
@@ -40,7 +42,7 @@ export default function MobileBottomNav() {
                   </span>
                 )}
               </div>
-              <span className={`text-[10px] mt-1 font-semibold transition-colors ${isActive ? "text-blue-700 dark:text-blue-400" : "text-gray-400 dark:text-gray-500"}`}>
+              <span className={`text-[10px] mt-1 font-bold transition-colors ${isActive ? "text-orange-500" : "text-gray-400 dark:text-gray-500"}`}>
                 {label}
               </span>
             </Link>

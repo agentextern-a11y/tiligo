@@ -15,30 +15,32 @@
 
 @layer base {
   :root {
-    --background: 248 250 252;
-    --foreground: 15 23 42;
+    --background: 254 252 248;       /* warm cream */
+    --foreground: 30 20 10;
     --card: 255 255 255;
-    --card-foreground: 15 23 42;
+    --card-foreground: 30 20 10;
     --popover: 255 255 255;
-    --popover-foreground: 15 23 42;
-    --primary: 37 99 235;
+    --popover-foreground: 30 20 10;
+    --primary: 23 96 56;             /* rich summer teal-green */
     --primary-foreground: 255 255 255;
-    --secondary: 241 245 249;
-    --secondary-foreground: 15 23 42;
-    --muted: 241 245 249;
-    --muted-foreground: 100 116 139;
-    --accent: 34 197 94;
+    --secondary: 255 245 230;
+    --secondary-foreground: 30 20 10;
+    --muted: 255 245 230;
+    --muted-foreground: 120 90 60;
+    --accent: 255 165 50;            /* warm golden amber */
     --accent-foreground: 255 255 255;
     --destructive: 239 68 68;
     --destructive-foreground: 255 255 255;
-    --border: 226 232 240;
-    --input: 226 232 240;
-    --ring: 37 99 235;
-    --radius: 0.75rem;
+    --border: 240 220 195;
+    --input: 240 220 195;
+    --ring: 255 165 50;
+    --radius: 1rem;
 
-    --tiligo-blue: #1d4ed8;
-    --tiligo-green: #16a34a;
-    --tiligo-orange: #f59e0b;
+    --tiligo-coral:   #ff6b6b;
+    --tiligo-peach:   #ffb347;
+    --tiligo-teal:    #06b6d4;
+    --tiligo-sky:     #38bdf8;
+    --tiligo-lime:    #a3e635;
   }
 
   .dark {
@@ -86,52 +88,90 @@
 }
 
 .tiligo-gradient {
-  background: linear-gradient(135deg, #1d4ed8 0%, #1e40af 40%, #15803d 100%);
+  background: linear-gradient(135deg, #f97316 0%, #fb923c 40%, #fbbf24 100%);
 }
 
 .hero-gradient {
-  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 50%, #15803d 100%);
+  background: linear-gradient(
+    150deg,
+    #0f4c3a 0%,
+    #1a6b4a 25%,
+    #ff8c42 60%,
+    #ffb347 80%,
+    #ffd700 100%
+  );
 }
 
 @keyframes motoRide {
-  0% { transform: translateX(-100px); opacity: 0; }
-  10% { opacity: 1; }
-  90% { opacity: 1; }
-  100% { transform: translateX(calc(100vw + 100px)); opacity: 0; }
+  0%   { transform: translateX(-120px) scaleX(1); opacity: 0; }
+  5%   { opacity: 1; }
+  95%  { opacity: 1; }
+  100% { transform: translateX(calc(100vw + 120px)) scaleX(1); opacity: 0; }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
+  0%, 100% { transform: translateY(0px) rotate(-2deg); }
+  50%       { transform: translateY(-14px) rotate(2deg); }
+}
+
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50%       { transform: translateY(-20px) scale(1.06); }
 }
 
 @keyframes pulse-green {
   0%, 100% { box-shadow: 0 0 0 0 rgba(34,197,94,0.4); }
-  50% { box-shadow: 0 0 0 10px rgba(34,197,94,0); }
+  50%       { box-shadow: 0 0 0 12px rgba(34,197,94,0); }
 }
 
-.moto-animate {
-  animation: motoRide 8s linear infinite;
+@keyframes pulse-warm {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255,165,50,0.45); }
+  50%       { box-shadow: 0 0 0 14px rgba(255,165,50,0); }
 }
 
-.float-animate {
-  animation: float 3s ease-in-out infinite;
+@keyframes shimmer {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
 }
 
-.pulse-green {
-  animation: pulse-green 2s infinite;
+@keyframes sunrise {
+  0%   { opacity: 0; transform: translateY(40px) scale(0.94); }
+  100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+.moto-animate     { animation: motoRide 8s linear infinite; }
+.float-animate    { animation: float 3s ease-in-out infinite; }
+.float-slow       { animation: floatSlow 5s ease-in-out infinite; }
+.pulse-green      { animation: pulse-green 2s infinite; }
+.pulse-warm       { animation: pulse-warm 2s infinite; }
+.spin-slow        { animation: spin-slow 18s linear infinite; }
+.sunrise          { animation: sunrise 0.8s cubic-bezier(0.16,1,0.3,1) forwards; }
+
+.shimmer-text {
+  background: linear-gradient(90deg, #f97316, #fbbf24, #06b6d4, #f97316);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: shimmer 3.5s linear infinite;
 }
 
 .category-pill {
-  @apply px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition-all duration-200 whitespace-nowrap;
+  @apply px-4 py-2 rounded-full text-sm font-semibold cursor-pointer transition-all duration-300 whitespace-nowrap;
 }
 
 .category-pill.active {
-  @apply bg-[#1d4ed8] text-white shadow-md;
+  background: linear-gradient(135deg, #f97316, #fbbf24);
+  @apply text-white shadow-lg scale-105;
 }
 
 .category-pill.inactive {
-  @apply bg-white text-gray-600 hover:bg-gray-50 border border-gray-200;
+  @apply bg-white/80 backdrop-blur text-gray-600 hover:text-orange-600 border border-orange-100 hover:border-orange-300 hover:shadow-md hover:scale-105;
 }
 
 .card-hover {

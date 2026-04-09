@@ -52,13 +52,13 @@ const FOOD_ITEMS = [
   { emoji: "🥗", delay: 0.8, duration: 14, y: 70,  size: "text-3xl", lane: 3 },
 ];
 
-// Neon glow colors cycling
+// Summer-edition warm neon colors
 const NEON_COLORS = [
-  "text-amber-400 drop-shadow-[0_0_20px_rgba(251,191,36,0.9)]",
-  "text-cyan-400 drop-shadow-[0_0_20px_rgba(34,211,238,0.9)]",
-  "text-pink-400 drop-shadow-[0_0_20px_rgba(244,114,182,0.9)]",
-  "text-green-400 drop-shadow-[0_0_20px_rgba(74,222,128,0.9)]",
-  "text-purple-400 drop-shadow-[0_0_20px_rgba(192,132,252,0.9)]",
+  "text-amber-300 drop-shadow-[0_0_24px_rgba(252,211,77,1)]",
+  "text-orange-300 drop-shadow-[0_0_24px_rgba(253,186,116,1)]",
+  "text-yellow-200 drop-shadow-[0_0_24px_rgba(254,240,138,1)]",
+  "text-cyan-300 drop-shadow-[0_0_24px_rgba(103,232,249,1)]",
+  "text-lime-300 drop-shadow-[0_0_24px_rgba(190,242,100,1)]",
 ];
 
 // Pull-to-Refresh hook
@@ -185,7 +185,26 @@ export default function Home() {
       />
 
       {/* HERO */}
-      <section className="hero-gradient relative overflow-hidden" style={{ minHeight: 520 }}>
+      <section className="hero-gradient relative overflow-hidden" style={{ minHeight: 540 }}>
+
+        {/* ☀️ Summer sun */}
+        <motion.div
+          className="absolute -top-16 -right-16 w-64 h-64 rounded-full opacity-20 pointer-events-none"
+          style={{ background: 'radial-gradient(circle, #ffd700 0%, #ff8c00 50%, transparent 70%)' }}
+          animate={{ scale: [1, 1.08, 1], opacity: [0.18, 0.26, 0.18] }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        {/* Soft warm haze blobs */}
+        <motion.div className="absolute top-10 left-1/4 w-96 h-40 rounded-full blur-3xl opacity-15 pointer-events-none"
+          style={{ background: '#ffb347' }}
+          animate={{ x: [-20, 20, -20] }}
+          transition={{ duration: 10, repeat: Infinity, ease: 'easeInOut' }}
+        />
+        <motion.div className="absolute bottom-20 right-1/4 w-80 h-32 rounded-full blur-3xl opacity-10 pointer-events-none"
+          style={{ background: '#06b6d4' }}
+          animate={{ x: [20, -20, 20] }}
+          transition={{ duration: 12, repeat: Infinity, ease: 'easeInOut' }}
+        />
 
         {/* ===== ROLLING FOOD & FRUITS (full-hero parallax layers) ===== */}
         <div className="absolute inset-0 pointer-events-none overflow-hidden">
@@ -334,7 +353,7 @@ export default function Home() {
       </section>
 
       {/* Stats bar */}
-      <section className="bg-white dark:bg-gray-900 border-b border-gray-100 dark:border-gray-800 shadow-sm">
+      <section className="bg-gradient-to-r from-orange-50 via-white to-amber-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-900 border-b border-orange-100 dark:border-gray-800 shadow-sm">
         <div className="max-w-5xl mx-auto px-4 py-4 grid grid-cols-3 gap-4">
           {[
             { icon: <Zap size={20} className="text-amber-500" />, title: "Dërgim Express", sub: "20–35 min mesatarisht" },
@@ -343,7 +362,7 @@ export default function Home() {
           ].map((f, i) => (
             <motion.div key={i} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 + i * 0.1 }}
               className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-gray-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0">{f.icon}</div>
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-orange-50 to-amber-50 dark:bg-gray-800 flex items-center justify-center flex-shrink-0 shadow-sm">{f.icon}</div>
               <div>
                 <p className="font-bold text-gray-900 dark:text-gray-100 text-sm">{f.title}</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">{f.sub}</p>
@@ -370,8 +389,8 @@ export default function Home() {
 
         {/* Store grid */}
         <div className="mb-6 flex items-center justify-between">
-          <h2 className="text-xl font-black text-gray-900 dark:text-gray-100">
-            Të gjitha Dyqanet
+          <h2 className="text-xl font-black text-gray-900 dark:text-gray-100 flex items-center gap-2">
+            <span className="text-2xl">🏪</span> Të gjitha Dyqanet
             <span className="ml-2 text-gray-400 font-normal text-base">({filtered.length})</span>
           </h2>
           {businesses.length > 0 && (
@@ -384,7 +403,7 @@ export default function Home() {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
             {[1,2,3,4,5,6].map(i => (
-              <div key={i} className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden animate-pulse">
+              <div key={i} className="bg-white/80 dark:bg-gray-800 rounded-2xl overflow-hidden animate-pulse">
                 <div className="h-44 bg-gray-200" />
                 <div className="p-4 space-y-2">
                   <div className="h-5 bg-gray-200 rounded w-2/3" />
@@ -411,7 +430,7 @@ export default function Home() {
                 whileHover={{ y: -4 }}
               >
                 <Link to={`/dyqani/${biz.id}`} className="block">
-                  <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 dark:border-gray-700">
+                  <div className="bg-white dark:bg-gray-800 rounded-2xl overflow-hidden shadow-md hover:shadow-2xl transition-all duration-300 border border-orange-50 dark:border-gray-700 hover:border-orange-200">
                     <div className="relative h-44 overflow-hidden">
                       <img
                         src={biz.image_url || `https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=400&q=80`}

@@ -17,7 +17,7 @@ export default function Navbar({ cart = [], onCartClick }) {
   const isRoot = ROOT_PATHS.includes(location.pathname);
 
   return (
-    <nav className="bg-white dark:bg-gray-900 shadow-sm sticky top-0 z-50 border-b border-gray-100 dark:border-gray-800"
+    <nav className="bg-white/95 backdrop-blur-md dark:bg-gray-900/95 shadow-sm sticky top-0 z-50 border-b border-orange-100 dark:border-gray-800"
       style={{ paddingTop: "env(safe-area-inset-top)" }}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/">
@@ -50,7 +50,8 @@ export default function Navbar({ cart = [], onCartClick }) {
           <div className="relative">
             <button
               onClick={() => setHyrjaOpen(!hyrjaOpen)}
-              className="flex items-center gap-1 bg-blue-700 text-white px-4 py-2 rounded-full font-medium hover:bg-blue-800 transition-colors"
+              className="flex items-center gap-1 text-white px-4 py-2 rounded-full font-bold hover:opacity-90 transition-all shadow-md"
+              style={{ background: 'linear-gradient(135deg,#f97316,#fbbf24)' }}
             >
               <User size={18} />
               Hyrja
