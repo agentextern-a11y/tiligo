@@ -250,32 +250,34 @@ export default function TrackOrder() {
   const mapCenter = deliveryCoords || effectiveUserCoords || KOSOVO_CENTER;
 
   if (loading) return (
-    <div className="min-h-screen flex items-center justify-center bg-[#f0f4f8]">
+    <div className="min-h-screen flex items-center justify-center" style={{ background: 'var(--bg-body)' }}>
       <div className="flex flex-col items-center gap-4">
         <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          className="w-12 h-12 border-4 border-blue-700 border-t-transparent rounded-full" />
-        <p className="text-gray-500 text-sm">Duke ngarkuar...</p>
+          className="w-12 h-12 rounded-full" style={{ border: '4px solid rgba(57,255,107,0.2)', borderTopColor: '#39FF6B' }} />
+        <p className="text-sm" style={{ color: 'var(--text-muted)' }}>Duke ngarkuar...</p>
       </div>
     </div>
   );
 
   return (
-    <div className="min-h-screen bg-[#f0f4f8]">
+    <div className="min-h-screen" style={{ background: 'var(--bg-body)' }}>
       {/* Header */}
-      <div className="bg-gradient-to-r from-blue-800 to-blue-900 text-white sticky top-0 z-50 shadow-xl">
+      <div className="sticky top-0 z-50 shadow-xl" style={{ background: 'var(--nav-bg)', borderBottom: '1px solid var(--nav-border)', backdropFilter: 'blur(20px)' }}>
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center gap-3">
           <button onClick={() => navigate("/")}
-            className="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-xl flex items-center justify-center transition-colors">
-            <ArrowLeft size={18} className="text-white" />
+            className="w-8 h-8 rounded-xl flex items-center justify-center transition-colors"
+            style={{ background: 'rgba(255,255,255,0.08)', border: '1px solid var(--nav-border)' }}>
+            <ArrowLeft size={18} style={{ color: 'var(--text-primary)' }} />
           </button>
           <div className="flex-1">
-            <h1 className="font-black text-white text-base">Gjurmo Porosinë</h1>
-            <p className="text-blue-200 text-xs">TiliGo Live Tracking</p>
+            <h1 className="font-black text-base" style={{ color: 'var(--text-heading)' }}>Gjurmo Porosinë</h1>
+            <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>TiliGo Live Tracking</p>
           </div>
           {order?.status === "ne_rruge" && (
-            <div className="flex items-center gap-1.5 bg-green-500/20 border border-green-400/40 px-3 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 bg-green-400 rounded-full animate-pulse" />
-              <span className="text-green-300 text-xs font-bold">Live</span>
+            <div className="flex items-center gap-1.5 px-3 py-1 rounded-full"
+              style={{ background: 'rgba(57,255,107,0.15)', border: '1px solid rgba(57,255,107,0.4)' }}>
+              <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#39FF6B' }} />
+              <span className="text-xs font-bold" style={{ color: '#39FF6B' }}>Live</span>
             </div>
           )}
         </div>
@@ -285,17 +287,19 @@ export default function TrackOrder() {
         {/* Search */}
         {!code && (
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl p-5 shadow-sm">
-            <h2 className="font-bold text-gray-900 mb-3">Fut Kodin e Porosisë</h2>
+            className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+            <h2 className="font-bold mb-3" style={{ color: 'var(--text-heading)' }}>Fut Kodin e Porosisë</h2>
             <div className="flex gap-2">
               <input
                 value={searchCode}
                 onChange={e => setSearchCode(e.target.value.toUpperCase())}
                 placeholder="p.sh. TG-ABC12"
-                className="flex-1 border-2 border-gray-100 focus:border-blue-500 rounded-xl px-4 py-3 text-sm outline-none transition-colors font-mono"
+                className="flex-1 rounded-xl px-4 py-3 text-sm outline-none font-mono"
+                style={{ background: 'var(--input-bg)', border: '1.5px solid var(--card-border)', color: 'var(--text-primary)' }}
               />
               <button onClick={() => loadOrder(searchCode)}
-                className="bg-blue-700 text-white px-5 py-3 rounded-xl font-bold hover:bg-blue-800 transition-colors text-sm">
+                className="px-5 py-3 rounded-xl font-bold text-sm transition-all"
+                style={{ background: 'linear-gradient(135deg,#39FF6B,#00BFFF)', color: '#020c1b' }}>
                 Kërko
               </button>
             </div>
@@ -305,8 +309,8 @@ export default function TrackOrder() {
         {!order && !loading && (
           <div className="text-center py-16">
             <div className="text-7xl mb-4">🔍</div>
-            <p className="text-gray-600 font-bold text-lg">Porosia nuk u gjet</p>
-            <p className="text-gray-400 text-sm mt-1">Kontrolloni kodin dhe provoni sërisht</p>
+            <p className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Porosia nuk u gjet</p>
+            <p className="text-sm mt-1" style={{ color: 'var(--text-muted)' }}>Kontrolloni kodin dhe provoni sërisht</p>
           </div>
         )}
 
@@ -378,23 +382,25 @@ export default function TrackOrder() {
 
             {/* Order header */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-              className="bg-white rounded-2xl overflow-hidden shadow-sm">
-              <div className="bg-gradient-to-r from-blue-700 to-blue-800 px-5 py-4">
+              className="rounded-2xl overflow-hidden" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+              <div className="px-5 py-4" style={{ background: 'linear-gradient(135deg,#020c1b,#0a2a4a)', borderBottom: '1px solid rgba(0,191,255,0.2)' }}>
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-blue-200 text-xs mb-0.5">Kodi i Porosisë</p>
-                    <p className="text-3xl font-black text-amber-400 tracking-wide">{order.order_code}</p>
+                    <p className="text-xs mb-0.5" style={{ color: 'var(--text-secondary)' }}>Kodi i Porosisë</p>
+                    <p className="text-3xl font-black tracking-wide" style={{ color: '#FBBF24' }}>{order.order_code}</p>
                   </div>
                   <button onClick={copyCode}
-                    className="flex items-center gap-1.5 text-xs text-white font-bold bg-white/15 hover:bg-white/25 px-3 py-2 rounded-xl transition-colors">
+                    className="flex items-center gap-1.5 text-xs font-bold px-3 py-2 rounded-xl transition-colors"
+                    style={{ background: 'rgba(255,255,255,0.1)', color: 'var(--text-primary)', border: '1px solid var(--nav-border)' }}>
                     <Copy size={13} /> {copied ? "✓ Kopjuar" : "Kopjo"}
                   </button>
                 </div>
                 <div className="mt-3 flex items-center gap-2">
-                  <span className={`w-2.5 h-2.5 rounded-full ${order.status === "dorezuar" ? "bg-green-400" : order.status === "anuluar" ? "bg-red-400" : "bg-amber-400 animate-pulse"}`} />
-                  <span className="text-white font-bold text-sm">{STATUS_LABELS[order.status]}</span>
+                  <span className="w-2.5 h-2.5 rounded-full animate-pulse" style={{ background: order.status === 'dorezuar' ? '#39FF6B' : order.status === 'anuluar' ? '#EF4444' : '#FBBF24' }} />
+                  <span className="font-bold text-sm" style={{ color: 'var(--text-primary)' }}>{STATUS_LABELS[order.status]}</span>
                   {etaSeconds !== null && order.status !== "dorezuar" && order.status !== "anuluar" && (
-                    <span className="ml-auto flex items-center gap-1 bg-white/15 px-2.5 py-1 rounded-full text-white text-xs font-bold">
+                    <span className="ml-auto flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold"
+                      style={{ background: 'rgba(57,255,107,0.15)', color: '#39FF6B', border: '1px solid rgba(57,255,107,0.3)' }}>
                       <Clock size={11} /> {formatETA(etaSeconds)}
                     </span>
                   )}
@@ -403,18 +409,18 @@ export default function TrackOrder() {
 
               {/* Business + Address */}
               <div className="px-5 py-4 space-y-2 text-sm">
-                <div className="flex items-center gap-2 text-gray-600">
+                <div className="flex items-center gap-2">
                   <span className="text-lg">🏪</span>
-                  <span className="font-medium">{order.business_name}</span>
+                  <span className="font-medium" style={{ color: 'var(--text-primary)' }}>{order.business_name}</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin size={14} className="text-blue-500 flex-shrink-0" />
-                  <span>{order.customer_address}</span>
+                <div className="flex items-center gap-2">
+                  <MapPin size={14} className="flex-shrink-0" style={{ color: '#00BFFF' }} />
+                  <span style={{ color: 'var(--text-secondary)' }}>{order.customer_address}</span>
                 </div>
                 {order.delivery_name && (
-                  <div className="flex items-center gap-2 text-gray-600">
-                    <Bike size={14} className="text-purple-500 flex-shrink-0" />
-                    <span className="font-medium">{order.delivery_name} — Dorëzuesi juaj</span>
+                  <div className="flex items-center gap-2">
+                    <Bike size={14} className="flex-shrink-0" style={{ color: '#39FF6B' }} />
+                    <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>{order.delivery_name} — Dorëzuesi juaj</span>
                   </div>
                 )}
               </div>
@@ -423,15 +429,16 @@ export default function TrackOrder() {
             {/* ===== REAL KOSOVO MAP ===== */}
             {userCoords && (
               <motion.div initial={{ opacity: 0, scale: 0.97 }} animate={{ opacity: 1, scale: 1 }} transition={{ delay: 0.2 }}
-                className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                className="rounded-2xl overflow-hidden" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
                 <div className="px-4 pt-4 pb-2 flex items-center justify-between">
-                  <h3 className="font-bold text-gray-900 flex items-center gap-2">
-                    <Navigation size={16} className="text-blue-600" />
+                  <h3 className="font-bold flex items-center gap-2" style={{ color: 'var(--text-heading)' }}>
+                    <Navigation size={16} style={{ color: '#00BFFF' }} />
                     {order.status === "ne_rruge" ? "Dorëzuesi Juaj · Live" : "Lokacioni Juaj"}
                   </h3>
                   {order.status === "ne_rruge" && deliveryCoords && (
-                    <span className="text-xs text-green-600 font-bold flex items-center gap-1 bg-green-50 px-2.5 py-1 rounded-full">
-                      <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> Lëviz Drejt Jush
+                    <span className="text-xs font-bold flex items-center gap-1 px-2.5 py-1 rounded-full"
+                      style={{ background: 'rgba(57,255,107,0.15)', color: '#39FF6B', border: '1px solid rgba(57,255,107,0.3)' }}>
+                      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: '#39FF6B' }} /> Lëviz Drejt Jush
                     </span>
                   )}
                 </div>
@@ -484,31 +491,32 @@ export default function TrackOrder() {
 
                 {/* ETA bar */}
                 {order.status === "ne_rruge" && etaSeconds !== null && (
-                  <div className="px-4 py-3 bg-purple-50 border-t border-purple-100 flex items-center justify-between">
+                  <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'rgba(139,92,246,0.1)', borderTop: '1px solid rgba(139,92,246,0.2)' }}>
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 bg-purple-600 rounded-xl flex items-center justify-center">
-                        <Bike size={16} className="text-white" />
+                      <div className="w-8 h-8 rounded-xl flex items-center justify-center"
+                        style={{ background: 'linear-gradient(135deg,#39FF6B,#00BFFF)' }}>
+                        <Bike size={16} style={{ color: '#020c1b' }} />
                       </div>
                       <div>
-                        <p className="font-bold text-purple-900 text-sm">Kohë e mbetur</p>
-                        <p className="text-purple-600 text-xs">
+                        <p className="font-bold text-sm" style={{ color: 'var(--text-heading)' }}>Kohë e mbetur</p>
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
                           {distanceKm ? `${distanceKm.toFixed(1)} km larg · ` : ""}{order.delivery_name} po ju sjell porosinë
                         </p>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="font-black text-purple-700 text-xl">{formatETA(etaSeconds)}</p>
-                      {order.delivery_lat && <p className="text-xs text-green-600 font-bold">📍 GPS Live</p>}
+                      <p className="font-black text-xl" style={{ color: '#39FF6B' }}>{formatETA(etaSeconds)}</p>
+                      {order.delivery_lat && <p className="text-xs font-bold" style={{ color: '#00BFFF' }}>📍 GPS Live</p>}
                     </div>
                   </div>
                 )}
                 {order.status !== "ne_rruge" && estimateETA(order.status) !== null && estimateETA(order.status) > 0 && (
-                  <div className="px-4 py-3 bg-blue-50 border-t border-blue-100 flex items-center justify-between">
-                    <div className="flex items-center gap-2 text-blue-700">
-                      <Clock size={16} />
-                      <span className="text-sm font-medium">Kohë e vlerësuar</span>
+                  <div className="px-4 py-3 flex items-center justify-between" style={{ background: 'rgba(0,191,255,0.08)', borderTop: '1px solid rgba(0,191,255,0.15)' }}>
+                    <div className="flex items-center gap-2">
+                      <Clock size={16} style={{ color: '#00BFFF' }} />
+                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>Kohë e vlerësuar</span>
                     </div>
-                    <span className="font-black text-blue-700">{formatETA(etaSeconds)}</span>
+                    <span className="font-black" style={{ color: '#00BFFF' }}>{formatETA(etaSeconds)}</span>
                   </div>
                 )}
               </motion.div>
@@ -516,32 +524,35 @@ export default function TrackOrder() {
 
             {/* Progress steps */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-              className="bg-white rounded-2xl p-5 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-5">Progresi i Porosisë</h3>
+              className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+              <h3 className="font-bold mb-5" style={{ color: 'var(--text-heading)' }}>Progresi i Porosisë</h3>
               <div className="space-y-1">
                 {STATUS_STEPS.map((step, i) => {
                   const isActive = i === currentStep;
                   const isDone = i < currentStep;
                   return (
                     <div key={step.key} className="flex items-center gap-3">
-                      {/* Line connector */}
                       <div className="flex flex-col items-center">
                         <motion.div
                           animate={isActive ? { scale: [1, 1.2, 1] } : {}}
                           transition={{ repeat: isActive ? Infinity : 0, duration: 1.5 }}
-                          className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500
-                            ${isDone ? "bg-green-500 text-white shadow-lg shadow-green-300/50"
-                              : isActive ? `${step.color} text-white shadow-xl ${step.neon}`
-                              : "bg-gray-100 text-gray-400"}`}
+                          className="w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 transition-all duration-500"
+                          style={isDone
+                            ? { background: 'linear-gradient(135deg,#39FF6B,#00cc5a)', color: '#020c1b', boxShadow: '0 0 12px rgba(57,255,107,0.4)' }
+                            : isActive
+                            ? { background: 'linear-gradient(135deg,#00BFFF,#0066FF)', color: '#fff', boxShadow: '0 0 16px rgba(0,191,255,0.5)' }
+                            : { background: 'rgba(0,40,80,0.5)', color: 'rgba(125,211,252,0.3)' }}
                         >
                           {isDone ? <CheckCircle size={18} /> : step.icon}
                         </motion.div>
                         {i < STATUS_STEPS.length - 1 && (
-                          <div className={`w-0.5 h-5 my-0.5 transition-colors duration-500 ${i < currentStep ? "bg-green-400" : "bg-gray-200"}`} />
+                          <div className="w-0.5 h-5 my-0.5 transition-colors duration-500"
+                            style={{ background: i < currentStep ? '#39FF6B' : 'rgba(0,60,120,0.5)' }} />
                         )}
                       </div>
                       <div className="flex-1 py-2">
-                        <p className={`text-sm font-bold transition-colors ${isActive ? "text-gray-900" : isDone ? "text-gray-500" : "text-gray-300"}`}>
+                        <p className="text-sm font-bold transition-colors"
+                          style={{ color: isActive ? 'var(--text-heading)' : isDone ? 'var(--text-secondary)' : 'rgba(125,211,252,0.25)' }}>
                           {step.label}
                         </p>
                       </div>
@@ -549,13 +560,14 @@ export default function TrackOrder() {
                         <motion.span
                           animate={{ opacity: [1, 0.5, 1] }}
                           transition={{ repeat: Infinity, duration: 1.2 }}
-                          className="text-xs bg-amber-100 text-amber-700 px-2.5 py-1 rounded-full font-bold"
+                          className="text-xs px-2.5 py-1 rounded-full font-bold"
+                          style={{ background: 'rgba(0,191,255,0.15)', color: '#00BFFF', border: '1px solid rgba(0,191,255,0.3)' }}
                         >
                           Tani
                         </motion.span>
                       )}
                       {isDone && (
-                        <span className="text-xs text-green-500 font-bold">✓</span>
+                        <span className="text-xs font-bold" style={{ color: '#39FF6B' }}>✓</span>
                       )}
                     </div>
                   );
@@ -565,30 +577,30 @@ export default function TrackOrder() {
 
             {/* Order summary */}
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }}
-              className="bg-white rounded-2xl p-5 shadow-sm">
-              <h3 className="font-bold text-gray-900 mb-4">Detajet e Porosisë</h3>
+              className="rounded-2xl p-5" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+              <h3 className="font-bold mb-4" style={{ color: 'var(--text-heading)' }}>Detajet e Porosisë</h3>
               <div className="space-y-2 text-sm mb-3">
                 {order.items?.map((item, i) => (
-                  <div key={i} className="flex justify-between py-1 border-b border-gray-50 last:border-0">
-                    <span className="text-gray-600">{item.qty}× {item.name}</span>
-                    <span className="font-bold text-gray-900">{(item.price * item.qty).toFixed(2)}€</span>
+                  <div key={i} className="flex justify-between py-1" style={{ borderBottom: '1px solid var(--divider)' }}>
+                    <span style={{ color: 'var(--text-secondary)' }}>{item.qty}× {item.name}</span>
+                    <span className="font-bold" style={{ color: 'var(--text-primary)' }}>{(item.price * item.qty).toFixed(2)}€</span>
                   </div>
                 ))}
               </div>
-              <div className="space-y-1 text-sm pt-2 border-t border-gray-100">
-                <div className="flex justify-between text-gray-500">
+              <div className="space-y-1 text-sm pt-2" style={{ borderTop: '1px solid var(--divider)' }}>
+                <div className="flex justify-between" style={{ color: 'var(--text-muted)' }}>
                   <span>Nëntotali</span>
                   <span>{(order.total - (order.delivery_fee || 1.5)).toFixed(2)}€</span>
                 </div>
-                <div className="flex justify-between text-gray-500">
+                <div className="flex justify-between" style={{ color: 'var(--text-muted)' }}>
                   <span>Dërgesa</span>
                   <span>{(order.delivery_fee || 1.5).toFixed(2)}€</span>
                 </div>
-                <div className="flex justify-between font-black text-base pt-2 border-t border-gray-100">
+                <div className="flex justify-between font-black text-base pt-2" style={{ borderTop: '1px solid var(--divider)', color: 'var(--text-heading)' }}>
                   <span>Totali</span>
-                  <span className="text-blue-700">{order.total?.toFixed(2)}€</span>
+                  <span style={{ color: '#39FF6B' }}>{order.total?.toFixed(2)}€</span>
                 </div>
-                <div className="flex justify-between text-gray-500 pt-1">
+                <div className="flex justify-between pt-1" style={{ color: 'var(--text-muted)' }}>
                   <span>Pagesa</span>
                   <span className="font-medium">Cash 💵</span>
                 </div>
