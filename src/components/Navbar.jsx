@@ -18,8 +18,7 @@ export default function Navbar({ cart = [], onCartClick }) {
 
   return (
     <nav className="sticky top-0 z-50 shadow-xl"
-      style={{ background: 'rgba(4,12,28,0.92)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(0,180,216,0.2)' }}
-      style={{ paddingTop: "env(safe-area-inset-top)" }}>
+      style={{ background: 'var(--nav-bg)', backdropFilter: 'blur(20px)', borderBottom: '1px solid var(--nav-border)', paddingTop: 'env(safe-area-inset-top)' }}>
       <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
         <Link to="/">
           <TiliGoLogo size="md" />
@@ -29,7 +28,8 @@ export default function Navbar({ cart = [], onCartClick }) {
         <div className="hidden md:flex items-center gap-6">
           <button
             onClick={onCartClick}
-            className="relative flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 font-medium transition-colors"
+            className="relative flex items-center gap-2 font-medium transition-colors hover:opacity-80"
+            style={{ color: 'var(--text-primary)' }}
           >
             <ShoppingCart size={20} />
             <span>Shporta</span>
@@ -42,7 +42,8 @@ export default function Navbar({ cart = [], onCartClick }) {
 
           <Link
             to="/porositjet-e-mia"
-            className="flex items-center gap-2 text-gray-600 dark:text-gray-300 hover:text-blue-700 dark:hover:text-blue-400 font-medium transition-colors"
+            className="flex items-center gap-2 font-medium transition-colors hover:opacity-80"
+            style={{ color: 'var(--text-primary)' }}
           >
             <Package size={20} />
             <span>Porositë</span>
@@ -64,18 +65,22 @@ export default function Navbar({ cart = [], onCartClick }) {
                   initial={{ opacity: 0, y: -8 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -8 }}
-                  className="absolute right-0 mt-2 w-52 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden z-50"
+                  className="absolute right-0 mt-2 w-52 rounded-xl shadow-2xl overflow-hidden z-50"
+                  style={{ background: 'var(--nav-bg)', border: '1px solid var(--nav-border)', backdropFilter: 'blur(20px)' }}
                 >
                   <Link to="/biznesi/login" onClick={() => setHyrjaOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium transition-colors">
+                    className="flex items-center gap-3 px-4 py-3 font-medium transition-colors hover:bg-white/10"
+                    style={{ color: 'var(--text-primary)' }}>
                     🏪 Hyrja Biznesit
                   </Link>
                   <Link to="/dorezuesi/login" onClick={() => setHyrjaOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium transition-colors">
+                    className="flex items-center gap-3 px-4 py-3 font-medium transition-colors hover:bg-white/10"
+                    style={{ color: 'var(--text-primary)' }}>
                     🛵 Hyrja Dorëzuesit
                   </Link>
                   <Link to="/admin" onClick={() => setHyrjaOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-200 font-medium transition-colors border-t border-gray-100 dark:border-gray-700">
+                    className="flex items-center gap-3 px-4 py-3 font-medium transition-colors hover:bg-white/10 border-t"
+                    style={{ color: 'var(--text-primary)', borderColor: 'var(--nav-border)' }}>
                     🔐 Paneli Admin
                   </Link>
                 </motion.div>
@@ -88,11 +93,12 @@ export default function Navbar({ cart = [], onCartClick }) {
         <div className="flex md:hidden items-center gap-3">
           {!isRoot && (
             <button onClick={() => navigate(-1)}
-              className="w-9 h-9 flex items-center justify-center rounded-xl hover:bg-gray-100 text-gray-700 transition-colors -ml-1">
+              className="w-9 h-9 flex items-center justify-center rounded-xl transition-colors -ml-1 hover:bg-white/10"
+              style={{ color: 'var(--text-primary)' }}>
               <ArrowLeft size={22} />
             </button>
           )}
-          <button onClick={onCartClick} className="relative text-gray-600">
+          <button onClick={onCartClick} className="relative" style={{ color: 'var(--text-primary)' }}>
             <ShoppingCart size={24} />
             {cartCount > 0 && (
               <span className="absolute -top-2 -right-2 bg-amber-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center font-bold">
@@ -101,7 +107,7 @@ export default function Navbar({ cart = [], onCartClick }) {
             )}
           </button>
           {isRoot && (
-            <button onClick={() => setMenuOpen(!menuOpen)} className="text-gray-600">
+            <button onClick={() => setMenuOpen(!menuOpen)} style={{ color: 'var(--text-primary)' }}>
               {menuOpen ? <X size={24} /> : <Menu size={24} />}
             </button>
           )}
@@ -114,23 +120,28 @@ export default function Navbar({ cart = [], onCartClick }) {
             initial={{ height: 0, opacity: 0 }}
             animate={{ height: "auto", opacity: 1 }}
             exit={{ height: 0, opacity: 0 }}
-            className="md:hidden bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 overflow-hidden"
+            className="md:hidden overflow-hidden"
+          style={{ background: 'var(--nav-bg)', borderTop: '1px solid var(--nav-border)' }}
           >
             <div className="px-4 py-3 space-y-1">
               <Link to="/porositjet-e-mia" onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 font-medium">
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/10 font-medium"
+                style={{ color: 'var(--text-primary)' }}>
                 <Package size={20} />Porositë e Mia
               </Link>
               <Link to="/biznesi/login" onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 text-gray-700 font-medium">
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/10 font-medium"
+                style={{ color: 'var(--text-primary)' }}>
                 🏪 Hyrja Biznesit
               </Link>
               <Link to="/dorezuesi/login" onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 text-gray-700 font-medium">
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/10 font-medium"
+                style={{ color: 'var(--text-primary)' }}>
                 🛵 Hyrja Dorëzuesit
               </Link>
               <Link to="/admin" onClick={() => setMenuOpen(false)}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-gray-50 text-gray-700 font-medium border-t border-gray-100">
+                className="flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-white/10 font-medium border-t"
+                style={{ color: 'var(--text-primary)', borderColor: 'var(--nav-border)' }}>
                 🔐 Paneli Admin
               </Link>
             </div>

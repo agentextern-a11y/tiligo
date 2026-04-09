@@ -1,6 +1,6 @@
 /** @type {import('tailwindcss').Config} */
 module.exports = {
-  darkMode: ["class"],
+  darkMode: "media",
   content: ["./index.html", "./src/**/*.{ts,tsx,js,jsx}"],
   safelist: [
     'bg-blue-600', 'bg-green-600', 'bg-amber-500', 'bg-red-500',

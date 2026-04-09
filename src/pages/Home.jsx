@@ -100,6 +100,7 @@ export default function Home() {
   useEffect(() => {
     loadBusinesses();
     requestLocation();
+    requestNotifications();
 
     // Auto-rotate mottos
     const mottoTimer = setInterval(() => {
@@ -119,18 +120,27 @@ export default function Home() {
 
   const requestLocation = () => {
     if (!navigator.geolocation) return;
+    // Request precise location with high accuracy
     navigator.geolocation.getCurrentPosition(
       async (pos) => {
         const { latitude, longitude } = pos.coords;
         try {
-          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`);
+          const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json&addressdetails=1`);
           const data = await res.json();
-          const city = data.address?.city || data.address?.town || data.address?.village;
+          const city = data.address?.city || data.address?.town || data.address?.village || data.address?.suburb;
           if (city) setUserCity(city);
         } catch {}
       },
-      () => {}
+      () => {},
+      { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
     );
+  };
+
+  const requestNotifications = async () => {
+    if (!('Notification' in window)) return;
+    if (Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
   };
 
   const handleRefresh = async () => {

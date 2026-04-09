@@ -72,7 +72,7 @@
   }
   body {
     @apply text-foreground font-inter;
-    background: #020c1b;
+    background: var(--bg-body);
     font-family: 'Inter', sans-serif;
     overscroll-behavior: none;
     -webkit-tap-highlight-color: transparent;
