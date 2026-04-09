@@ -67,9 +67,23 @@ export default function Checkout() {
       payment_method: "cash",
     };
 
+    // Request notification permission
+    if ('Notification' in window && Notification.permission === 'default') {
+      await Notification.requestPermission();
+    }
     await base44.entities.Order.create(order);
     clearCart();
     localStorage.setItem("tiligo_active_order", code);
+    // Confirm notification
+    if ('Notification' in window && Notification.permission === 'granted') {
+      new Notification('🛵 TiliGo — Porosia u dërgua!', {
+        body: `Kodi: ${code} · Porosia juaj u pranua nga biznesi!`,
+        icon: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/9ff7c0a46_IMG_0106.jpeg',
+        badge: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/9ff7c0a46_IMG_0106.jpeg',
+        tag: code,
+        requireInteraction: true,
+      });
+    }
     setTimeout(() => generateOrderPDF(order), 800);
     setLoading(false);
     navigate(`/gjurmo/${code}`);
