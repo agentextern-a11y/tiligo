@@ -476,7 +476,7 @@ export default function TrackOrder() {
                     maxBoundsViscosity={0.85}
                   >
                     <TileLayer
-                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                      url="https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
                       attribution=""
                       maxZoom={19}
                       keepBuffer={4}
