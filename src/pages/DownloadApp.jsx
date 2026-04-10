@@ -67,7 +67,9 @@ export default function DownloadApp() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
             className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-4 mb-5">
-              <div className="w-14 h-14 bg-green-100 dark:bg-green-900/30 rounded-2xl flex items-center justify-center text-3xl">🤖</div>
+              <div className="w-14 h-14 bg-white rounded-2xl flex items-center justify-center overflow-hidden shadow-sm border border-gray-100" style={{padding:6}}>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Android_robot.svg" alt="Android" className="w-full h-full object-contain" />
+              </div>
               <div>
                 <h3 className="font-black text-gray-900 dark:text-gray-100 text-lg">Android</h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm">Chrome · Samsung Internet</p>
@@ -90,7 +92,7 @@ export default function DownloadApp() {
             {installPrompt ? (
               <button onClick={handleAndroidInstall}
                 className="flex items-center justify-center gap-2 w-full bg-green-600 hover:bg-green-700 text-white font-black py-4 rounded-xl transition-colors text-base shadow-md">
-                <Smartphone size={20} /> Instalo Tani në Android
+                <img src="https://upload.wikimedia.org/wikipedia/commons/d/d7/Android_robot.svg" alt="" className="w-5 h-5 invert" /> Instalo Tani në Android
               </button>
             ) : isAndroid && (
               <p className="text-center text-xs text-amber-600 bg-amber-50 dark:bg-amber-900/20 rounded-xl py-2 px-3">
@@ -103,7 +105,9 @@ export default function DownloadApp() {
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
             <div className="flex items-center gap-4 mb-5">
-              <div className="w-14 h-14 bg-blue-100 dark:bg-blue-900/30 rounded-2xl flex items-center justify-center text-3xl">🍎</div>
+              <div className="w-14 h-14 bg-black rounded-2xl flex items-center justify-center overflow-hidden" style={{padding:10}}>
+                <img src="https://upload.wikimedia.org/wikipedia/commons/f/fa/Apple_logo_black.svg" alt="Apple" className="w-full h-full object-contain invert" />
+              </div>
               <div>
                 <h3 className="font-black text-gray-900 dark:text-gray-100 text-lg">iPhone / iPad</h3>
                 <p className="text-gray-500 dark:text-gray-400 text-sm">Safari (i detyrueshëm)</p>
@@ -139,7 +143,7 @@ export default function DownloadApp() {
           {/* Why PWA */}
           <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
             className="bg-gradient-to-br from-blue-700 to-green-600 rounded-2xl p-6 text-white">
-            <h3 className="font-black text-lg mb-3 text-center">✨ Pse TiliGo si App?</h3>
+            <h3 className="font-black text-lg mb-3 text-center">Pse TiliGo si App?</h3>
             <div className="grid grid-cols-2 gap-3">
               {[
                 { icon: "⚡", text: "Hapje e shpejtë" },
