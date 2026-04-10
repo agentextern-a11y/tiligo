@@ -7,7 +7,9 @@ import { motion } from "framer-motion";
 
 export default function BusinessLogin() {
   const navigate = useNavigate();
-  const [form, setForm] = useState({ phone: "", password: "" });
+  const saved = (() => { try { return JSON.parse(localStorage.getItem("tiligo_biz_remember") || "null"); } catch { return null; } })();
+  const [form, setForm] = useState({ phone: saved?.phone || "", password: saved?.password || "" });
+  const [remember, setRemember] = useState(!!saved);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -21,6 +23,8 @@ export default function BusinessLogin() {
     if (biz.password !== form.password) { setError("Fjalëkalimi është i gabuar!"); setLoading(false); return; }
     if (biz.status === "pending") { setError("Llogaria juaj po shqyrtohet nga administratori."); setLoading(false); return; }
     if (biz.status === "rejected") { setError("Llogaria juaj u refuzua. Kontaktoni administratorin."); setLoading(false); return; }
+    if (remember) localStorage.setItem("tiligo_biz_remember", JSON.stringify({ phone: form.phone, password: form.password }));
+    else localStorage.removeItem("tiligo_biz_remember");
     localStorage.setItem("tiligo_business", JSON.stringify(biz));
     navigate("/biznesi/dashboard");
     setLoading(false);
@@ -67,6 +71,16 @@ export default function BusinessLogin() {
                 placeholder="••••••••" required
                 className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50" />
             </div>
+
+            {/* Remember me */}
+            <label className="flex items-center gap-2.5 cursor-pointer select-none">
+              <div onClick={() => setRemember(!remember)}
+                className="w-5 h-5 rounded-md flex items-center justify-center flex-shrink-0 transition-all"
+                style={{ background: remember ? '#1d4ed8' : 'transparent', border: remember ? '2px solid #1d4ed8' : '2px solid #d1d5db' }}>
+                {remember && <span className="text-white text-xs font-black">✓</span>}
+              </div>
+              <span className="text-sm text-gray-600 font-medium">Mbaj mend të dhënat e hyrjes</span>
+            </label>
 
             <button type="submit" disabled={loading}
               className="w-full bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white font-black py-4 rounded-xl transition-colors">
