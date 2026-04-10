@@ -5,8 +5,7 @@ import { useCart } from "@/lib/useCart";
 
 const TABS = [
   { path: "/", label: "Kryefaqja", icon: Home },
-  { path: "/porositjet-e-mia", label: "Porositë", icon: Package },
-  { path: "/biznesi/login", label: "Profili", icon: User },
+  { path: "/porositjet-e-mia", label: "Profili", icon: User },
 ];
 
 export default function MobileBottomNav() {

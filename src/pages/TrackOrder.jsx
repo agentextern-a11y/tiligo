@@ -38,8 +38,9 @@ const STATUS_LABELS = {
   gati_per_dorezim: "Gati për Dorëzim", ne_rruge: "Në Rrugë", dorezuar: "Dorëzuar", anuluar: "Anuluar"
 };
 
-// Kosovo bounding box center
+// Kosovo bounding box
 const KOSOVO_CENTER = [42.6629, 21.1655];
+const KOSOVO_BOUNDS = [[41.85, 20.01], [43.27, 21.79]];
 
 // Haversine distance in km
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -63,12 +64,16 @@ function gpsETA(deliveryCoords, userCoords) {
   return Math.round((km / 30) * 3600); // seconds
 }
 
-// Smooth map recenter on position change
-function MapUpdater({ center }) {
+// Auto-fit to show both markers or zoom to user
+function MapController({ center, deliveryCoords, userCoords }) {
   const map = useMap();
   useEffect(() => {
-    if (center) map.flyTo(center, 14, { duration: 1.5 });
-  }, [center, map]);
+    if (deliveryCoords && userCoords) {
+      map.fitBounds([deliveryCoords, userCoords], { padding: [60, 60], animate: true, duration: 1.2 });
+    } else if (center) {
+      map.flyTo(center, 15, { animate: true, duration: 1.2 });
+    }
+  }, [center?.[0], center?.[1], deliveryCoords?.[0], deliveryCoords?.[1]]);
   return null;
 }
 
@@ -462,17 +467,25 @@ export default function TrackOrder() {
                 </div>
                 <div style={{ height: 340 }}>
                   <MapContainer
-                    center={mapCenter}
+                    center={effectiveUserCoords || KOSOVO_CENTER}
                     zoom={15}
                     style={{ height: "100%", width: "100%" }}
                     zoomControl={true}
                     scrollWheelZoom={true}
+                    maxBounds={KOSOVO_BOUNDS}
+                    maxBoundsViscosity={0.85}
                   >
                     <TileLayer
-                      url="https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}"
+                      url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
                       attribution=""
+                      maxZoom={19}
+                      keepBuffer={4}
                     />
-                    <MapUpdater center={mapCenter} />
+                    <MapController
+                      center={mapCenter}
+                      deliveryCoords={order.status === 'ne_rruge' ? deliveryCoords : null}
+                      userCoords={effectiveUserCoords}
+                    />
 
                     {/* User location */}
                     {effectiveUserCoords && (
