@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Plus, Trash2, Edit2, Package, ToggleLeft, ToggleRight, Upload, LogOut, Bell, TrendingUp, Clock, CheckCircle2, XCircle, ChefHat, Bike, BarChart2, Settings, AlertTriangle } from "lucide-react";
+import { Plus, Trash2, Edit2, Package, ToggleLeft, ToggleRight, Upload, LogOut, Bell, TrendingUp, Clock, CheckCircle2, XCircle, ChefHat, Bike, BarChart2, Settings, AlertTriangle, FileText } from "lucide-react";
+import StatementGenerator from "@/components/StatementGenerator";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import TiliGoLogo from "@/components/TiliGoLogo";
@@ -235,6 +236,7 @@ export default function BusinessDashboard() {
             { key: "products", icon: <ChefHat size={15} />, label: `Produktet` },
             { key: "analytics", icon: <BarChart2 size={15} />, label: "Analitika" },
             { key: "history", icon: <Clock size={15} />, label: "Historiku" },
+            { key: "statement", icon: <FileText size={15} />, label: "Pasqyra" },
             { key: "settings", icon: <Settings size={15} />, label: "Cilësimet" },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -529,6 +531,11 @@ export default function BusinessDashboard() {
               </motion.div>
             ))}
           </div>
+        )}
+
+        {/* STATEMENT TAB */}
+        {tab === "statement" && (
+          <StatementGenerator orders={orders} mode="business" entityName={biz.name} isAdmin={false} />
         )}
 
         {/* SETTINGS TAB */}

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { Shield, LogOut, Check, X, Edit2, Trash2, ChevronDown, ChevronUp, Upload, Package, RefreshCw, Link as LinkIcon, Facebook, Instagram, Twitter, Globe, Save } from "lucide-react";
+import { Shield, LogOut, Check, X, Edit2, Trash2, ChevronDown, ChevronUp, Upload, Package, RefreshCw, Link as LinkIcon, Facebook, Instagram, Twitter, Globe, Save, FileText } from "lucide-react";
+import StatementGenerator from "@/components/StatementGenerator";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import TiliGoLogo from "@/components/TiliGoLogo";
@@ -270,6 +271,7 @@ export default function AdminPanel() {
             { key: "deliveries", label: `🛵 Dorëzuesit`, badge: pendingDrivers },
             { key: "orders", label: `📦 Porositë`, badge: activeOrders },
             { key: "coupons", label: `🎫 Kupona` },
+            { key: "statement", label: `📊 Pasqyra` },
             { key: "settings", label: `⚙️ Cilësimet` },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -706,6 +708,11 @@ export default function AdminPanel() {
                   </div>
                 )}
               </div>
+            )}
+
+            {/* STATEMENT */}
+            {tab === "statement" && (
+              <StatementGenerator orders={orders} mode="admin" entityName="TiliGo Admin" isAdmin={true} />
             )}
 
             {/* SETTINGS */}

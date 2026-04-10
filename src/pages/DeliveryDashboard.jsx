@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ToggleLeft, ToggleRight, LogOut, Bell, CheckCircle, MapPin, Phone, Bike, AlertTriangle, Navigation } from "lucide-react";
+import { ToggleLeft, ToggleRight, LogOut, Bell, CheckCircle, MapPin, Phone, Bike, AlertTriangle, Navigation, FileText } from "lucide-react";
+import StatementGenerator from "@/components/StatementGenerator";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import LiveRouteMap from "@/components/LiveRouteMap";
@@ -190,6 +191,7 @@ export default function DeliveryDashboard() {
             { key: "available", label: `📦 Gati`, badge: availableOrders.length },
             { key: "mine", label: `🛵 Të Miat`, badge: myOrders.length },
             { key: "history", label: "📋 Historiku" },
+            { key: "statement", label: "📊 Pasqyra" },
             { key: "settings", label: "⚙️ Cilësimet" },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -421,6 +423,13 @@ export default function DeliveryDashboard() {
               </>
             )}
           </>
+        )}
+
+        {/* STATEMENT */}
+        {tab === "statement" && (
+          <div className="max-w-2xl">
+            <StatementGenerator orders={myHistory.concat(myOrders)} mode="delivery" entityName={driver.name} isAdmin={false} />
+          </div>
         )}
 
         {/* SETTINGS */}
