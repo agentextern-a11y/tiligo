@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { ArrowLeft, Edit2, Save, X, Package, ChevronDown, ChevronUp, LogOut, MapPin, Download } from "lucide-react";
+import { ArrowLeft, Edit2, Save, X, Package, ChevronDown, ChevronUp, LogOut, MapPin, Download, User, Lock } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
 import { generateOrderPDF } from "@/lib/pdfGenerator";
@@ -30,9 +30,6 @@ export default function MyOrders() {
   const [editOrder, setEditOrder] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [coupons, setCoupons] = useState([]);
-  const [loginForm, setLoginForm] = useState({ name: "", phone: "" });
-
-  useEffect(() => { if (profile) loadOrders(); }, [profile]);
 
   const loadOrders = async () => {
     setLoading(true);
@@ -43,13 +40,7 @@ export default function MyOrders() {
     setCoupons(c.filter(x => x.code.startsWith("WELCOME-" + profile.phone) && x.is_active));
   };
 
-  const login = (e) => {
-    e.preventDefault();
-    if (!loginForm.name || !loginForm.phone) return;
-    const p = { name: loginForm.name, phone: loginForm.phone };
-    localStorage.setItem("tiligo_user_profile", JSON.stringify(p));
-    setProfile(p);
-  };
+  useEffect(() => { if (profile) loadOrders(); }, [profile]);
 
   const logout = () => {
     localStorage.removeItem("tiligo_user_profile");
@@ -74,6 +65,24 @@ export default function MyOrders() {
   const initials = profile?.name?.split(" ").map(w => w[0]).join("").toUpperCase().slice(0,2) || "TG";
 
   // ─── LOGIN SCREEN ───────────────────────────────────────────
+  const [loginForm, setLoginForm] = useState({ phone: "", password: "" });
+  const [loginError, setLoginError] = useState("");
+  const [loginLoading, setLoginLoading] = useState(false);
+
+  const handleLogin = async (e) => {
+    e.preventDefault();
+    setLoginError("");
+    setLoginLoading(true);
+    const results = await base44.entities.Customer.filter({ phone: loginForm.phone });
+    if (results.length === 0) { setLoginError("Numri i telefonit nuk u gjet!"); setLoginLoading(false); return; }
+    const customer = results[0];
+    if (customer.password !== loginForm.password) { setLoginError("Fjalëkalimi është i gabuar!"); setLoginLoading(false); return; }
+    const p = { id: customer.id, name: customer.name, phone: customer.phone };
+    localStorage.setItem("tiligo_user_profile", JSON.stringify(p));
+    setProfile(p);
+    setLoginLoading(false);
+  };
+
   if (!profile) return (
     <div className="min-h-screen" style={{ background: 'var(--bg-body)' }}>
       <div className="sticky top-0 z-50" style={{ background: 'var(--nav-bg)', borderBottom: '1px solid var(--nav-border)', backdropFilter: 'blur(20px)' }}>
@@ -84,49 +93,56 @@ export default function MyOrders() {
       </div>
       <div className="max-w-lg mx-auto px-4 py-12">
         {/* Hero */}
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-          className="rounded-3xl overflow-hidden mb-6 relative"
-          style={{ background: 'linear-gradient(160deg,#020c1b 0%,#0a2a4a 50%,#001830 100%)', border: '1px solid rgba(0,191,255,0.2)', minHeight: 180 }}>
+        <div className="rounded-3xl overflow-hidden mb-6 relative"
+          style={{ background: 'linear-gradient(160deg,#020c1b 0%,#0a2a4a 50%,#001830 100%)', border: '1px solid rgba(0,191,255,0.2)', minHeight: 160 }}>
           <div className="absolute top-0 right-0 w-48 h-48 rounded-full opacity-20 pointer-events-none"
             style={{ background: 'radial-gradient(circle,#39FF6B,transparent 70%)', transform: 'translate(30%,-30%)' }} />
-          <div className="absolute bottom-0 left-0 w-36 h-36 rounded-full opacity-15 pointer-events-none"
-            style={{ background: 'radial-gradient(circle,#00BFFF,transparent 70%)', transform: 'translate(-30%,30%)' }} />
           <div className="relative z-10 p-8 text-center">
             <div className="text-5xl mb-3">🛵</div>
             <h2 className="font-black text-2xl mb-1" style={{ color: '#fff' }}>Mirë se vini!</h2>
-            <p className="text-sm" style={{ color: 'rgba(125,211,252,0.8)' }}>Hyrni për të parë porositë dhe kuponat tuaj</p>
-            <div className="mt-4 inline-flex items-center gap-2 px-4 py-2 rounded-full" style={{ background: 'rgba(57,255,107,0.15)', border: '1px solid rgba(57,255,107,0.35)' }}>
-              <span className="text-lg">🎁</span>
-              <span className="text-xs font-bold" style={{ color: '#39FF6B' }}>2€ bonus për porosinë e parë!</span>
-            </div>
+            <p className="text-sm" style={{ color: 'rgba(125,211,252,0.8)' }}>Hyni për të parë porositë dhe kuponat tuaj</p>
           </div>
-        </motion.div>
+        </div>
 
-        <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}
-          className="rounded-3xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
-          <h3 className="font-black text-base mb-4" style={{ color: 'var(--text-heading)' }}>Hyr / Regjistrohu</h3>
-          <form onSubmit={login} className="space-y-3">
-            <div>
-              <label className="text-xs font-bold uppercase tracking-wide block mb-1.5" style={{ color: 'var(--text-muted)' }}>Emri i Plotë</label>
-              <input value={loginForm.name} onChange={e => setLoginForm({ ...loginForm, name: e.target.value })}
-                placeholder="Arben Krasniqi" required
-                className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                style={{ background: 'var(--input-bg)', border: '1.5px solid var(--card-border)', color: 'var(--text-primary)' }} />
+        {/* Login form */}
+        <div className="rounded-3xl p-6" style={{ background: 'var(--card-bg)', border: '1px solid var(--card-border)' }}>
+          <h3 className="font-black text-base mb-4" style={{ color: 'var(--text-heading)' }}>Hyrja e Klientit</h3>
+          {loginError && (
+            <div className="rounded-xl px-4 py-3 mb-4 text-sm font-medium"
+              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#F87171' }}>
+              {loginError}
             </div>
+          )}
+          <form onSubmit={handleLogin} className="space-y-3">
             <div>
-              <label className="text-xs font-bold uppercase tracking-wide block mb-1.5" style={{ color: 'var(--text-muted)' }}>Numri i Telefonit</label>
-              <input value={loginForm.phone} onChange={e => setLoginForm({ ...loginForm, phone: e.target.value })}
+              <label className="text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                <User size={12} /> Numri i Telefonit
+              </label>
+              <input type="tel" value={loginForm.phone} onChange={e => setLoginForm({ ...loginForm, phone: e.target.value })}
                 placeholder="+383 44 000 000" required
                 className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
                 style={{ background: 'var(--input-bg)', border: '1.5px solid var(--card-border)', color: 'var(--text-primary)' }} />
             </div>
-            <button type="submit"
-              className="w-full font-black py-3.5 rounded-2xl text-sm transition-all active:scale-95 mt-1"
+            <div>
+              <label className="text-xs font-bold uppercase tracking-wide flex items-center gap-1.5 mb-1.5" style={{ color: 'var(--text-muted)' }}>
+                <Lock size={12} /> Fjalëkalimi
+              </label>
+              <input type="password" value={loginForm.password} onChange={e => setLoginForm({ ...loginForm, password: e.target.value })}
+                placeholder="••••••••" required
+                className="w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                style={{ background: 'var(--input-bg)', border: '1.5px solid var(--card-border)', color: 'var(--text-primary)' }} />
+            </div>
+            <button type="submit" disabled={loginLoading}
+              className="w-full font-black py-3.5 rounded-2xl text-sm transition-all active:scale-95 mt-1 disabled:opacity-60"
               style={{ background: 'linear-gradient(135deg,#39FF6B,#00BFFF)', color: '#020c1b', boxShadow: '0 0 20px rgba(57,255,107,0.3)' }}>
-              Vazhdo →
+              {loginLoading ? "Duke hyrë..." : "Vazhdo →"}
             </button>
           </form>
-        </motion.div>
+          <p className="text-center text-xs mt-4" style={{ color: 'var(--text-muted)' }}>
+            Nuk keni llogari?{" "}
+            <Link to="/user/register" className="font-bold" style={{ color: '#39FF6B' }}>Regjistrohu & merr 2€</Link>
+          </p>
+        </div>
       </div>
     </div>
   );
