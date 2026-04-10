@@ -23,6 +23,7 @@ import DeliveryDashboard from './pages/DeliveryDashboard';
 import AdminPanel from './pages/AdminPanel';
 import DownloadApp from './pages/DownloadApp';
 import DownloadProject from './pages/DownloadProject';
+import StaffHub from './pages/StaffHub';
 
 const AuthenticatedApp = () => {
   const { isLoadingAuth, isLoadingPublicSettings, authError, navigateToLogin } = useAuth();
@@ -63,6 +64,7 @@ const AuthenticatedApp = () => {
         <Route path="/gjurmo" element={<TrackOrder />} />
         <Route path="/porositjet-e-mia" element={<MyOrders />} />
         <Route path="/shkarko-app" element={<DownloadApp />} />
+        <Route path="/staff" element={<StaffHub />} />
       </Route>
       {/* Staff/business screens — no bottom nav */}
       <Route path="/biznesi/register" element={<BusinessRegister />} />

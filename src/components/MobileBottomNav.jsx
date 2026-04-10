@@ -1,11 +1,12 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Package, User } from "lucide-react";
+import { Home, User, Briefcase } from "lucide-react";
 import { motion } from "framer-motion";
 import { useCart } from "@/lib/useCart";
 
 const TABS = [
   { path: "/", label: "Kryefaqja", icon: Home },
-  { path: "/porositjet-e-mia", label: "Profili", icon: User },
+  { path: "/porositjet-e-mia", label: "Llogaria", icon: User },
+  { path: "/staff", label: "Staff", icon: Briefcase },
 ];
 
 export default function MobileBottomNav() {
