@@ -1,0 +1,27 @@
+{
+  "name": "Coupon",
+  "type": "object",
+  "properties": {
+    "code": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "discount_amount": {
+      "type": "number"
+    },
+    "is_active": {
+      "type": "boolean",
+      "default": true
+    },
+    "uses_left": {
+      "type": "number",
+      "default": -1
+    }
+  },
+  "required": [
+    "code",
+    "discount_amount"
+  ]
+}

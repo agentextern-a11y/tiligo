@@ -37,14 +37,48 @@ export default function AdminPanel() {
   const [settingsForm, setSettingsForm] = useState({});
   const [settingsSaving, setSettingsSaving] = useState(false);
   const [settingsSaved, setSettingsSaved] = useState(false);
+  const [coupons, setCoupons] = useState([]);
+  const [couponForm, setCouponForm] = useState({ code: "", description: "", discount_amount: "", uses_left: -1 });
+  const [showCouponForm, setShowCouponForm] = useState(false);
 
   useEffect(() => {
     if (!authed) return;
     loadAll();
     loadSettings();
+    loadCoupons();
     const unsub = base44.entities.Order.subscribe(() => loadAll());
     return unsub;
   }, [authed]);
+
+  const loadCoupons = async () => {
+    const data = await base44.entities.Coupon.list();
+    setCoupons(data);
+  };
+
+  const saveCoupon = async (e) => {
+    e.preventDefault();
+    await base44.entities.Coupon.create({
+      ...couponForm,
+      code: couponForm.code.toUpperCase(),
+      discount_amount: parseFloat(couponForm.discount_amount),
+      uses_left: parseInt(couponForm.uses_left),
+      is_active: true,
+    });
+    setCouponForm({ code: "", description: "", discount_amount: "", uses_left: -1 });
+    setShowCouponForm(false);
+    loadCoupons();
+  };
+
+  const toggleCoupon = async (c) => {
+    await base44.entities.Coupon.update(c.id, { is_active: !c.is_active });
+    loadCoupons();
+  };
+
+  const deleteCoupon = async (id) => {
+    if (!confirm("Jeni i sigurt?")) return;
+    await base44.entities.Coupon.delete(id);
+    loadCoupons();
+  };
 
   const loadSettings = async () => {
     const data = await base44.entities.AppSettings.list();
@@ -235,6 +269,7 @@ export default function AdminPanel() {
             { key: "businesses", label: `🏪 Biznese`, badge: pendingBiz },
             { key: "deliveries", label: `🛵 Dorëzuesit`, badge: pendingDrivers },
             { key: "orders", label: `📦 Porositë`, badge: activeOrders },
+            { key: "coupons", label: `🎫 Kupona` },
             { key: "settings", label: `⚙️ Cilësimet` },
           ].map(t => (
             <button key={t.key} onClick={() => setTab(t.key)}
@@ -575,6 +610,101 @@ export default function AdminPanel() {
                     </AnimatePresence>
                   </motion.div>
                 ))}
+              </div>
+            )}
+
+            {/* COUPONS */}
+            {tab === "coupons" && (
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div>
+                    <h2 className="font-black text-gray-900">Kupona</h2>
+                    <p className="text-gray-500 text-sm">{coupons.length} kupona total</p>
+                  </div>
+                  <button onClick={() => setShowCouponForm(!showCouponForm)}
+                    className="flex items-center gap-2 bg-gray-900 text-white text-sm font-bold px-4 py-2.5 rounded-xl hover:bg-gray-800 transition-colors shadow-md">
+                    <span className="text-base">+</span> Kupon i Ri
+                  </button>
+                </div>
+
+                {showCouponForm && (
+                  <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+                    className="bg-white rounded-2xl p-5 shadow-sm">
+                    <h3 className="font-bold text-gray-900 mb-4">🎫 Krijo Kupon të Ri</h3>
+                    <form onSubmit={saveCoupon} className="space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1">Kodi *</label>
+                          <input value={couponForm.code} onChange={e => setCouponForm({...couponForm, code: e.target.value.toUpperCase()})}
+                            placeholder="p.sh. SAVE10" required
+                            className="w-full border-2 border-gray-100 focus:border-blue-500 rounded-xl px-3 py-2.5 text-sm outline-none font-mono tracking-widest" />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1">Zbritja (€) *</label>
+                          <input type="number" step="0.01" min="0" value={couponForm.discount_amount}
+                            onChange={e => setCouponForm({...couponForm, discount_amount: e.target.value})}
+                            placeholder="p.sh. 2.50" required
+                            className="w-full border-2 border-gray-100 focus:border-blue-500 rounded-xl px-3 py-2.5 text-sm outline-none" />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1">Përshkrimi</label>
+                          <input value={couponForm.description} onChange={e => setCouponForm({...couponForm, description: e.target.value})}
+                            placeholder="p.sh. Zbritje 2.50€"
+                            className="w-full border-2 border-gray-100 focus:border-blue-500 rounded-xl px-3 py-2.5 text-sm outline-none" />
+                        </div>
+                        <div>
+                          <label className="text-xs font-bold text-gray-500 uppercase tracking-wide block mb-1">Përdorime (-1 = pafund)</label>
+                          <input type="number" value={couponForm.uses_left} onChange={e => setCouponForm({...couponForm, uses_left: e.target.value})}
+                            placeholder="-1"
+                            className="w-full border-2 border-gray-100 focus:border-blue-500 rounded-xl px-3 py-2.5 text-sm outline-none" />
+                        </div>
+                      </div>
+                      <div className="flex gap-3 pt-1">
+                        <button type="button" onClick={() => setShowCouponForm(false)}
+                          className="flex-1 bg-gray-100 text-gray-700 font-bold py-3 rounded-xl text-sm">Anulo</button>
+                        <button type="submit"
+                          className="flex-1 bg-gray-900 text-white font-bold py-3 rounded-xl text-sm shadow-md">🎫 Krijo Kuponin</button>
+                      </div>
+                    </form>
+                  </motion.div>
+                )}
+
+                {coupons.length === 0 ? (
+                  <div className="text-center py-16 text-gray-400">
+                    <div className="text-5xl mb-3">🎫</div>
+                    <p>Nuk ka kupona akoma</p>
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {coupons.map((c, i) => (
+                      <motion.div key={c.id} initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.04 }}
+                        className="bg-white rounded-2xl p-4 shadow-sm flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-xl ${c.is_active ? 'bg-green-50' : 'bg-gray-100'}`}>
+                            🎫
+                          </div>
+                          <div>
+                            <p className="font-black text-gray-900 font-mono tracking-wide">{c.code}</p>
+                            <p className="text-sm text-gray-500">{c.description || ""} · <span className="text-green-600 font-bold">-{c.discount_amount?.toFixed(2)}€</span></p>
+                            <p className="text-xs text-gray-400">{c.uses_left === -1 ? "Përdorime: Pafund" : `Përdorime të mbetura: ${c.uses_left}`}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <button onClick={() => toggleCoupon(c)}
+                            className={`text-xs font-bold px-3 py-1.5 rounded-full transition-colors ${c.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-500 hover:bg-gray-200'}`}>
+                            {c.is_active ? "✓ Aktiv" : "Jo aktiv"}
+                          </button>
+                          <button onClick={() => deleteCoupon(c.id)}
+                            className="w-8 h-8 bg-red-50 hover:bg-red-100 text-red-500 rounded-xl flex items-center justify-center transition-colors">
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

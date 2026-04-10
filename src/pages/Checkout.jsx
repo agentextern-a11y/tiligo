@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, User, Banknote, CheckCircle, Copy, Crosshair, Loader } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, User, Banknote, CheckCircle, Copy, Crosshair, Loader, Tag, X } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
 import { useCart } from "@/lib/useCart";
@@ -36,10 +36,34 @@ export default function Checkout() {
     }, () => setGpsLoading(false));
   };
   const [loading, setLoading] = useState(false);
+  const [couponCode, setCouponCode] = useState("");
+  const [appliedCoupon, setAppliedCoupon] = useState(null);
+  const [couponError, setCouponError] = useState("");
+  const [couponLoading, setCouponLoading] = useState(false);
 
   const subtotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const deliveryFee = cart.length > 0 ? (cart[0]?.delivery_fee ?? 1.5) : 1.5;
-  const total = subtotal + deliveryFee;
+  const discount = appliedCoupon ? appliedCoupon.discount_amount : 0;
+  const total = Math.max(0, subtotal + deliveryFee - discount);
+
+  const applyCoupon = async () => {
+    if (!couponCode.trim()) return;
+    setCouponLoading(true);
+    setCouponError("");
+    const results = await base44.entities.Coupon.filter({ code: couponCode.trim().toUpperCase(), is_active: true });
+    const coupon = results[0];
+    if (!coupon) {
+      setCouponError("Kuponi nuk u gjet ose është i pavlefshëm.");
+    } else if (coupon.uses_left === 0) {
+      setCouponError("Ky kupon është shfrytëzuar plotësisht.");
+    } else {
+      setAppliedCoupon(coupon);
+      setCouponError("");
+    }
+    setCouponLoading(false);
+  };
+
+  const removeCoupon = () => { setAppliedCoupon(null); setCouponCode(""); setCouponError(""); };
 
   const handleOrder = async (e) => {
     e.preventDefault();
@@ -72,6 +96,10 @@ export default function Checkout() {
       await Notification.requestPermission();
     }
     await base44.entities.Order.create(order);
+    // Decrement coupon uses
+    if (appliedCoupon && appliedCoupon.uses_left > 0) {
+      await base44.entities.Coupon.update(appliedCoupon.id, { uses_left: appliedCoupon.uses_left - 1 });
+    }
     clearCart();
     localStorage.setItem("tiligo_active_order", code);
     // Confirm notification
@@ -125,6 +153,11 @@ export default function Checkout() {
             <div className="flex justify-between text-sm text-gray-500">
               <span>Dërgesa</span><span>{deliveryFee.toFixed(2)}€</span>
             </div>
+            {discount > 0 && (
+              <div className="flex justify-between text-sm text-green-600 font-semibold">
+                <span>🎫 Zbritje Kuponi</span><span>-{discount.toFixed(2)}€</span>
+              </div>
+            )}
             <div className="flex justify-between font-black text-base text-gray-900 pt-1">
               <span>Totali</span><span className="text-blue-700">{total.toFixed(2)}€</span>
             </div>
@@ -183,6 +216,35 @@ export default function Checkout() {
               placeholder="Instruksione të veçanta..."
               rows={2}
               className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 resize-none" />
+          </div>
+
+          {/* Coupon */}
+          <div>
+            <label className="text-sm font-semibold text-gray-700 flex items-center gap-1.5 mb-1.5">
+              <Tag size={14} /> Kodi i Kuponit (opsionale)
+            </label>
+            {appliedCoupon ? (
+              <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-4 py-3">
+                <div>
+                  <p className="text-green-700 font-bold text-sm">🎫 {appliedCoupon.code}</p>
+                  <p className="text-green-600 text-xs">Zbritje: -{appliedCoupon.discount_amount.toFixed(2)}€ · {appliedCoupon.description || "Kupon aktiv"}</p>
+                </div>
+                <button type="button" onClick={removeCoupon} className="text-red-400 hover:text-red-600">
+                  <X size={16} />
+                </button>
+              </div>
+            ) : (
+              <div className="flex gap-2">
+                <input value={couponCode} onChange={e => setCouponCode(e.target.value.toUpperCase())}
+                  placeholder="p.sh. SAVE10"
+                  className="flex-1 border border-gray-200 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50 font-mono tracking-widest" />
+                <button type="button" onClick={applyCoupon} disabled={couponLoading}
+                  className="px-4 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors disabled:opacity-60 flex-shrink-0">
+                  {couponLoading ? <Loader size={14} className="animate-spin" /> : "Apliko"}
+                </button>
+              </div>
+            )}
+            {couponError && <p className="text-red-500 text-xs mt-1">{couponError}</p>}
           </div>
 
           {/* Payment */}
