@@ -459,6 +459,32 @@ export default function Home() {
         </div>
       </main>
 
+      {/* ═══ SPONSORS ═══ */}
+      <div className="max-w-2xl mx-auto px-6 py-8">
+        <p className="text-center text-[10px] font-bold tracking-[0.25em] uppercase mb-4" style={{ color: 'var(--text-muted)' }}>Sponsorët Tanë</p>
+        <div className="flex items-center justify-center gap-6 flex-wrap">
+          {[
+            {
+              light: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/e0dddd653_IMG_0144.jpeg',
+              dark:  'https://media.base44.com/images/public/69d519273be8cf966434f77a/781629bd0_IMG_0143.jpeg',
+              name:  'Tili Cleaning'
+            },
+            {
+              light: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/8e198f96c_IMG_0146.jpg',
+              dark:  'https://media.base44.com/images/public/69d519273be8cf966434f77a/4a190bf33_IMG_0145.jpg',
+              name:  'Free Shop Tili'
+            },
+          ].map(s => (
+            <div key={s.name} className="rounded-xl overflow-hidden" style={{ height: 44, opacity: 0.85 }}>
+              <picture>
+                <source srcSet={s.dark} media="(prefers-color-scheme: dark)" />
+                <img src={s.light} alt={s.name} className="h-full w-auto object-contain" style={{ maxWidth: 140 }} />
+              </picture>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ═══ FOOTER ═══ */}
       <footer className="mt-12 pb-28 md:pb-0" style={{ background: 'var(--bg-body)', borderTop: '1px solid var(--divider)' }}>
         <div className="max-w-2xl mx-auto px-6 py-12 text-center">
