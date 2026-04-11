@@ -475,13 +475,19 @@ export default function Home() {
                 { light: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/e0dddd653_IMG_0144.jpeg', dark: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/781629bd0_IMG_0143.jpeg', name: 'Tili Cleaning' },
                 { light: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/8e198f96c_IMG_0146.jpg', dark: 'https://media.base44.com/images/public/69d519273be8cf966434f77a/4a190bf33_IMG_0145.jpg', name: 'Free Shop Tili' },
               ].map(s => (
-                <div key={s.name} className="overflow-hidden" style={{ borderRadius: 16, filter: 'blur(0.6px)', opacity: 0.82 }}>
+                <div key={s.name} className="overflow-hidden" style={{
+                  borderRadius: 20,
+                  boxShadow: '0 8px 28px rgba(0,0,0,0.22), 0 2px 8px rgba(0,0,0,0.12)',
+                  transform: 'perspective(400px) rotateX(3deg)',
+                  opacity: 1,
+                }}>
                   <picture>
                     <source srcSet={s.dark} media="(prefers-color-scheme: dark)" />
-                    <img src={s.light} alt={s.name} style={{ height: 52, maxWidth: 150, objectFit: 'contain', display: 'block' }} />
+                    <img src={s.light} alt={s.name} style={{ height: 56, maxWidth: 160, objectFit: 'contain', display: 'block' }} />
                   </picture>
                 </div>
               ))}
+
             </div>
           </div>
           <p className="text-xs mt-8" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>© 2025 TiliGo · Prishtinë, Kosovë</p>
