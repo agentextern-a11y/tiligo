@@ -284,7 +284,7 @@ export default function DeliveryDashboard() {
                     <a href={`tel:${order.customer_phone}`} className="ml-auto font-bold text-sm" style={{ color: W }}>{order.customer_phone}</a>
                   </div>
                 </div>
-                {order.customer_lat && <div className="mb-4"><LiveRouteMap driverCoords={driverCoords} customerCoords={[order.customer_lat, order.customer_lng]} customerName={order.customer_name} customerAddress={order.customer_address} /></div>}
+                {order.customer_lat && <div className="mb-4"><LiveRouteMap driverCoords={driverCoords} customerCoords={[order.customer_lat, order.customer_lng]} customerName={order.customer_name} customerAddress={order.customer_address} vehicle={driver.vehicle} /></div>}
                 {order.customer_lat && driverCoords && (
                   <div className="bg-purple-50 rounded-xl px-4 py-2 mb-3 flex items-center justify-between text-sm">
                     <span className="text-purple-700 font-medium">Distance to customer</span>
