@@ -122,7 +122,7 @@ export default function StaffPortalSection() {
                 {[{ val: "Flex", label: "Orar" }, { val: "1.50€+", label: "Për Dorëzim" }, { val: "100%", label: "Liri" }].map((s, i) =>
                 <div key={i} className="text-center p-2.5 rounded-xl" style={{ background: "rgba(0,40,80,0.4)" }}>
                     <p className="font-black text-base" style={{ color: "#39FF6B" }}>{s.val}</p>
-                    <p className="text-xs" style={{ color: "var(--text-muted)" }}>{s.label}</p>
+                    <p className="text-xs opacity-100" style={{ color: "var(--text-muted)" }}>{s.label}</p>
                   </div>
                 )}
               </div>
