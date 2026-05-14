@@ -462,6 +462,12 @@ export default function Home() {
         </div>
       </main>
 
+      {/* ═══ STAFF PORTAL ═══ */}
+      <StaffPortalSection />
+
+      {/* ═══ SUPPORT TICKET ═══ */}
+      <TicketForm />
+
       {/* ═══ FOOTER ═══ */}
       <footer className="mt-12 pb-28 md:pb-0" style={{ background: 'var(--bg-body)', borderTop: '1px solid var(--divider)' }}>
         <div className="max-w-2xl mx-auto px-6 py-12 text-center">
@@ -502,6 +508,8 @@ export default function Home() {
 
 /* ── Social links ─────────────────────────────────────── */
 import { Facebook, Instagram, Globe } from "lucide-react";
+import StaffPortalSection from "@/components/StaffPortalSection";
+import TicketForm from "@/components/TicketForm";
 function SocialLinks() {
   const [links, setLinks] = useState({ facebook: "https://facebook.com/tiligoo", instagram: "", tiktok: "", website: "" });
   useEffect(() => {

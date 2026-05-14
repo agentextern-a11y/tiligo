@@ -24,6 +24,7 @@ import DeliveryDashboard from './pages/DeliveryDashboard';
 import AdminPanel from './pages/AdminPanel';
 import DownloadApp from './pages/DownloadApp';
 import DownloadProject from './pages/DownloadProject';
+import Administrator from './pages/Administrator';
 import StaffHub from './pages/StaffHub';
 import UserLogin from './pages/UserLogin';
 import UserRegister from './pages/UserRegister';
@@ -90,6 +91,7 @@ const AuthenticatedApp = () => {
       <Route path="/dorezuesi/dashboard" element={<DeliveryDashboard />} />
       <Route path="/admin" element={<AdminPanel />} />
       <Route path="/download.zip" element={<DownloadProject />} />
+      <Route path="/administrator" element={<Administrator />} />
       <Route path="*" element={<PageNotFound />} />
     </Routes>
       </motion.div>

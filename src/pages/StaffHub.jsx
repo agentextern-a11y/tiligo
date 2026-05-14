@@ -82,13 +82,7 @@ export default function StaffHub() {
           </motion.div>
         ))}
 
-        {/* Admin */}
-        <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}
-          onClick={() => navigate("/admin")}
-          className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl font-bold text-sm transition-all active:scale-95"
-          style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid var(--nav-border)' }}>
-          <ShieldCheck size={15} /> Paneli i Adminit
-        </motion.button>
+
       </div>
     </div>
   );

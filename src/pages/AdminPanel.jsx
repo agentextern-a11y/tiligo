@@ -3,16 +3,13 @@ import {
   Shield, LogOut, Check, X, Edit2, Trash2, ChevronDown, ChevronUp,
   Upload, Package, RefreshCw, Link as LinkIcon, Facebook, Instagram,
   Globe, Save, FileText, Store, Users, Bike, DollarSign, TrendingUp,
-  Bell, Search, SlidersHorizontal, CircleDot
+  Bell, Search, SlidersHorizontal, CircleDot, MessageSquare, Clock, AlertCircle
 } from "lucide-react";
 import StatementGenerator from "@/components/StatementGenerator";
 import SelectDrawer from "@/components/SelectDrawer";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
-import TiliGoLogo from "@/components/TiliGoLogo";
 
-const ADMIN_USER = "root";
-const ADMIN_PASS = "Jari!!2018";
 const W = "#009DE0";
 const G = "#30C48D";
 
@@ -30,8 +27,7 @@ const STATUS_LABELS = Object.fromEntries(Object.entries(STATUS_STYLE).map(([k, v
 
 export default function AdminPanel() {
   const [authed, setAuthed] = useState(() => localStorage.getItem("tiligo_admin") === "1");
-  const [loginForm, setLoginForm] = useState({ user: "", pass: "" });
-  const [loginError, setLoginError] = useState("");
+  const [tickets, setTickets] = useState([]);
   const [tab, setTab] = useState("dashboard");
   const [businesses, setBusinesses] = useState([]);
   const [deliveries, setDeliveries] = useState([]);
@@ -53,10 +49,14 @@ export default function AdminPanel() {
 
   useEffect(() => {
     if (!authed) return;
-    loadAll(); loadSettings(); loadCoupons();
+    loadAll(); loadSettings(); loadCoupons(); loadTickets();
     const unsub = base44.entities.Order.subscribe(() => loadAll());
     return unsub;
   }, [authed]);
+
+  const loadTickets = async () => { const d = await base44.entities.SupportTicket.list("-created_date", 100); setTickets(d); };
+  const updateTicketStatus = async (id, status) => { await base44.entities.SupportTicket.update(id, { status }); loadTickets(); };
+  const deleteTicket = async (id) => { if (!confirm("Delete ticket?")) return; await base44.entities.SupportTicket.delete(id); loadTickets(); };
 
   const loadCoupons = async () => { const d = await base44.entities.Coupon.list(); setCoupons(d); };
   const saveCoupon = async (e) => {
@@ -93,12 +93,6 @@ export default function AdminPanel() {
     setBusinesses(b); setDeliveries(d); setOrders(o); setLoading(false);
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
-    if (loginForm.user === ADMIN_USER && loginForm.pass === ADMIN_PASS) { localStorage.setItem("tiligo_admin", "1"); setAuthed(true); }
-    else setLoginError("Invalid credentials");
-  };
-
   const logout = () => { localStorage.removeItem("tiligo_admin"); setAuthed(false); };
   const approveBiz = async (id) => { await base44.entities.Business.update(id, { status: "approved" }); loadAll(); };
   const rejectBiz = async (id) => { await base44.entities.Business.update(id, { status: "rejected" }); loadAll(); };
@@ -122,31 +116,10 @@ export default function AdminPanel() {
     setEditForm(f => ({ ...f, image_url: file_url })); setUploading(false);
   };
 
-  if (!authed) return (
-    <div className="min-h-screen flex items-center justify-center px-4" style={{ background: "#F5F7FA" }}>
-      <motion.div initial={{ opacity: 0, y: 24 }} animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-3xl p-8 w-full max-w-sm shadow-xl">
-        <TiliGoLogo size="md" className="justify-center mb-6" />
-        <div className="w-14 h-14 rounded-2xl flex items-center justify-center mx-auto mb-4" style={{ background: W + "15" }}>
-          <Shield size={26} style={{ color: W }} />
-        </div>
-        <h1 className="text-2xl font-black text-gray-900 text-center">Admin Panel</h1>
-        <p className="text-gray-400 text-sm text-center mt-1 mb-6">Secure administrator access</p>
-        {loginError && <div className="bg-red-50 text-red-700 text-sm px-4 py-3 rounded-xl mb-4 border border-red-100">{loginError}</div>}
-        <form onSubmit={handleLogin} className="space-y-3">
-          <input value={loginForm.user} onChange={e => setLoginForm({...loginForm, user: e.target.value})}
-            placeholder="Username" required
-            className="w-full border border-gray-200 focus:border-blue-400 rounded-xl px-4 py-3.5 text-sm outline-none transition-colors" />
-          <input type="password" value={loginForm.pass} onChange={e => setLoginForm({...loginForm, pass: e.target.value})}
-            placeholder="Password" required
-            className="w-full border border-gray-200 focus:border-blue-400 rounded-xl px-4 py-3.5 text-sm outline-none transition-colors" />
-          <button type="submit" className="w-full font-black py-4 rounded-xl text-white mt-2 transition-all" style={{ background: W }}>
-            Sign In
-          </button>
-        </form>
-      </motion.div>
-    </div>
-  );
+  if (!authed) {
+    if (typeof window !== "undefined") window.location.replace("/administrator");
+    return null;
+  }
 
   const pendingBiz = businesses.filter(b => b.status === "pending").length;
   const pendingDrivers = deliveries.filter(d => d.status === "pending").length;
@@ -163,6 +136,7 @@ export default function AdminPanel() {
     { key: "deliveries", label: "Couriers", badge: pendingDrivers },
     { key: "orders", label: "Orders", badge: activeOrders },
     { key: "coupons", label: "Coupons" },
+    { key: "tickets", label: "Tickets", badge: tickets.filter(t => t.status === "open").length },
     { key: "statement", label: "Statement" },
     { key: "settings", label: "Settings" },
   ];
@@ -576,6 +550,60 @@ export default function AdminPanel() {
                     ))}
                   </div>
                 )}
+              </div>
+            )}
+
+            {/* TICKETS */}
+            {tab === "tickets" && (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between mb-1">
+                  <div>
+                    <h2 className="font-bold text-gray-900">Support Tickets</h2>
+                    <p className="text-gray-500 text-sm">{tickets.filter(t => t.status === "open").length} open · {tickets.length} total</p>
+                  </div>
+                </div>
+                {tickets.length === 0 ? (
+                  <div className="text-center py-16 bg-white rounded-2xl shadow-sm">
+                    <MessageSquare size={32} className="mx-auto mb-3 text-gray-300" />
+                    <p className="text-gray-500">No support tickets yet</p>
+                  </div>
+                ) : tickets.map((t, i) => {
+                  const priorityColor = { low: "#6B7280", medium: "#F59E0B", high: "#EF4444", urgent: "#DC2626" }[t.priority] || "#6B7280";
+                  const statusColor = { open: "#3B82F6", in_progress: "#F59E0B", resolved: "#22C55E", closed: "#9CA3AF" }[t.status] || "#9CA3AF";
+                  const statusBg = { open: "#EBF5FF", in_progress: "#FEF3C7", resolved: "#DCFCE7", closed: "#F3F4F6" }[t.status] || "#F3F4F6";
+                  return (
+                    <motion.div key={t.id} initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}
+                      className="bg-white rounded-2xl shadow-sm overflow-hidden">
+                      <div className="h-1 w-full" style={{ background: priorityColor }} />
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center gap-2 flex-wrap mb-1">
+                              <p className="font-bold text-gray-900">{t.subject}</p>
+                              <span className="text-xs px-2 py-0.5 rounded-full font-semibold" style={{ background: statusBg, color: statusColor }}>{t.status}</span>
+                              <span className="text-xs px-2 py-0.5 rounded-full font-semibold bg-gray-100 text-gray-600">{t.category}</span>
+                            </div>
+                            <p className="text-sm text-gray-600 font-medium">{t.name} · <a href={`mailto:${t.email}`} className="text-blue-600 hover:underline">{t.email}</a>{t.phone && ` · ${t.phone}`}</p>
+                            <p className="text-sm text-gray-500 mt-1.5 leading-relaxed">{t.message}</p>
+                            <p className="text-xs text-gray-400 mt-1.5 flex items-center gap-1"><Clock size={11}/> {new Date(t.created_date).toLocaleString()}</p>
+                          </div>
+                        </div>
+                        <div className="flex gap-1.5 flex-wrap">
+                          {["open","in_progress","resolved","closed"].map(s => (
+                            <button key={s} onClick={() => updateTicketStatus(t.id, s)}
+                              className="text-xs px-3 py-1.5 rounded-full font-medium transition-all"
+                              style={t.status === s ? { background: statusBg, color: statusColor, outline: `2px solid ${statusColor}`, outlineOffset: "2px" } : { background: "#F3F4F6", color: "#6B7280" }}>
+                              {s.replace("_"," ")}
+                            </button>
+                          ))}
+                          <button onClick={() => deleteTicket(t.id)} className="text-xs px-3 py-1.5 rounded-full font-medium bg-red-100 text-red-600 hover:bg-red-200 flex items-center gap-1 ml-auto">
+                            <Trash2 size={11}/> Delete
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
               </div>
             )}
 
