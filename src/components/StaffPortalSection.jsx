@@ -57,10 +57,10 @@ export default function StaffPortalSection() {
                 <Store size={28} style={{ color: "#00BFFF" }} />
               </motion.div>
 
-              <span className="font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3 inline-block text-base opacity-100 hidden"
-              style={{ background: "rgba(0,191,255,0.1)", color: "#00BFFF", border: "1px solid rgba(0,191,255,0.25)" }}>
-                Biznes Partner
-              </span>
+              
+
+
+              
               <h3 className="font-black text-2xl mb-2" style={{ color: "var(--text-heading)" }}>Rrit Biznesin Tënd</h3>
               <p className="text-sm leading-relaxed mb-8" style={{ color: "var(--text-muted)" }}>
                 Lidhuni me mijëra klientë të rinj çdo ditë. Menaxhoni menunë, ndiqni porositë dhe rritni të ardhurat tuaja me platformën tonë.
@@ -109,10 +109,10 @@ export default function StaffPortalSection() {
                 <Bike size={28} style={{ color: "#39FF6B" }} />
               </motion.div>
 
-              <span className="text-xs font-bold uppercase tracking-widest px-3 py-1 rounded-full mb-3 inline-block hidden"
-              style={{ background: "rgba(57,255,107,0.1)", color: "#39FF6B", border: "1px solid rgba(57,255,107,0.25)" }}>
-                Courier Partner
-              </span>
+              
+
+
+              
               <h3 className="font-black text-2xl mb-2" style={{ color: "var(--text-heading)" }}>Fito çdo Ditë</h3>
               <p className="text-sm leading-relaxed mb-8" style={{ color: "var(--text-muted)" }}>
                 Bëhu pjesë e ekipit tonë dhe fito para reale. Oraret tuaja, rrugët tuaja. Liri totale me të ardhura të garantuara.
