@@ -499,7 +499,7 @@ export default function Home() {
 
             </div>
           </div>
-          <p className="text-xs mt-8" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>© 2025 TiliGo · Prishtinë, Kosovë</p>
+          <p className="text-xs mt-8" style={{ color: 'var(--text-muted)', opacity: 0.5 }}>© 2026 TiliGo · Vushtrri, Kosovë 🇽🇰</p>
         </div>
       </footer>
     </div>);
