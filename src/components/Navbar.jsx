@@ -92,7 +92,7 @@ export default function Navbar({ cart = [], onCartClick }) {
                 style={{ background: 'var(--nav-bg)', border: '1px solid var(--nav-border)', backdropFilter: 'blur(20px)' }}>
                 
                   <Link to="/porositjet-e-mia" onClick={() => setHyrjaOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 font-medium transition-colors hover:bg-white/10"
+                className="flex items-center gap-3 px-4 py-3 font-medium transition-colors hover:bg-white/10 rounded-[10px]"
                 style={{ color: 'var(--text-primary)' }}>
                     👤 Llogaria Ime
                   </Link>
