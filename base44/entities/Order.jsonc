@@ -81,17 +81,29 @@
   ],
   "rls": {
     "create": {},
-    "read": {},
+    "read": {
+      "$or": [
+        {
+          "created_by": "{{user.email}}"
+        },
+        {
+          "user_condition": {
+            "role": "admin"
+          }
+        }
+      ]
+    },
     "update": {
       "$or": [
         {
-          "data.customer_phone": "{{user.data.phone}}"
-        },
-        {
-          "data.business_id": "{{user.data.business_id}}"
-        },
-        {
-          "data.delivery_id": "{{user.data.delivery_id}}"
+          "created_by": "{{user.email}}",
+          "data.status": {
+            "$in": [
+              "e_re",
+              "pranuar",
+              "ne_pergatitje"
+            ]
+          }
         },
         {
           "user_condition": {
