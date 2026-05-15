@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { ArrowLeft, MapPin, Phone, User, Banknote, CreditCard, CheckCircle, Copy, Crosshair, Loader, Tag, X, Zap, UserCheck, UserX, Lock } from "lucide-react";
+import { ArrowLeft, MapPin, Phone, User, Banknote, CheckCircle, Copy, Crosshair, Loader, Tag, X, Zap, UserCheck, UserX } from "lucide-react";
 import { base44 } from "@/api/base44Client";
 import { motion } from "framer-motion";
 import { useCart } from "@/lib/useCart";
@@ -36,7 +36,6 @@ export default function Checkout() {
     }, () => setGpsLoading(false));
   };
   const [loading, setLoading] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState("cash"); // "cash" | "card"
   const [priority, setPriority] = useState(false);
   const [saveAccount, setSaveAccount] = useState(false);
   const [couponCode, setCouponCode] = useState("");
@@ -80,9 +79,16 @@ export default function Checkout() {
 
   const removeCoupon = () => { setAppliedCoupon(null); setCouponCode(""); setCouponError(""); };
 
-  const placeOrder = async (code, method) => {
+  const handleOrder = async (e) => {
+    e.preventDefault();
+    if (!form.name || !form.phone || !form.address) return;
+    if (cart.length === 0) return;
+    setLoading(true);
+
+    const code = generateCode();
     const businessId = cart[0]?.business_id || "";
     const businessName = cart[0]?.business_name || "";
+
     const order = {
       order_code: code,
       customer_name: form.name,
@@ -96,19 +102,24 @@ export default function Checkout() {
       business_id: businessId,
       business_name: businessName,
       status: "e_re",
-      payment_method: method,
+      payment_method: "cash",
       priority: priority,
     };
+
+    // Request notification permission
     if ('Notification' in window && Notification.permission === 'default') {
       await Notification.requestPermission();
     }
     await base44.entities.Order.create(order);
+    // Decrement coupon uses
     if (appliedCoupon && appliedCoupon.uses_left > 0) {
       await base44.entities.Coupon.update(appliedCoupon.id, { uses_left: appliedCoupon.uses_left - 1 });
     }
+    // Save account and check for welcome bonus
     if (saveAccount) {
       const profile = { name: form.name, phone: form.phone };
       localStorage.setItem("tiligo_user_profile", JSON.stringify(profile));
+      // Check if first order → create welcome coupon
       const existing = await base44.entities.Order.filter({ customer_phone: form.phone });
       if (existing.length <= 1) {
         const welcomeCode = "WELCOME-" + form.phone;
@@ -120,6 +131,7 @@ export default function Checkout() {
     }
     clearCart();
     localStorage.setItem("tiligo_active_order", code);
+    // Confirm notification
     if ('Notification' in window && Notification.permission === 'granted') {
       new Notification('🛵 TiliGo — Porosia u dërgua!', {
         body: `Kodi: ${code} · Porosia juaj u pranua nga biznesi!`,
@@ -129,48 +141,6 @@ export default function Checkout() {
         requireInteraction: true,
       });
     }
-    return order;
-  };
-
-  const handleOrder = async (e) => {
-    e.preventDefault();
-    if (!form.name || !form.phone || !form.address) return;
-    if (cart.length === 0) return;
-    setLoading(true);
-    const code = generateCode();
-
-    if (paymentMethod === "card") {
-      // Check if running in iframe (Base44 preview)
-      if (window.self !== window.top) {
-        alert("💳 Pagesa online funksionon vetëm nga aplikacioni i publikuar. Ju lutemi hapni app-in direkt.");
-        setLoading(false);
-        return;
-      }
-      try {
-        const res = await base44.functions.invoke("createStripeCheckout", {
-          items: cart.map(i => ({ id: i.id, name: i.name, price: i.price, qty: i.qty })),
-          deliveryFee,
-          discount,
-          orderCode: code,
-          customerName: form.name,
-          customerPhone: form.phone,
-          customerAddress: form.address,
-          notes: form.notes,
-          priority,
-          couponId: appliedCoupon?.id || "",
-        });
-        // Pre-create order as pending payment
-        await placeOrder(code, "card");
-        window.location.href = res.data.url;
-      } catch (err) {
-        console.error(err);
-        setLoading(false);
-      }
-      return;
-    }
-
-    // Cash flow
-    const order = await placeOrder(code, "cash");
     setTimeout(() => generateOrderPDF(order), 800);
     setLoading(false);
     navigate(`/gjurmo/${code}`);
@@ -352,62 +322,19 @@ export default function Checkout() {
             </div>
           </div>
 
-          {/* Payment Method */}
-          <div>
-            <label className="text-sm font-semibold text-gray-700 mb-2 block">💳 Metoda e Pagesës</label>
-            <div className="grid grid-cols-2 gap-3">
-              <motion.div whileTap={{ scale: 0.97 }} onClick={() => setPaymentMethod("cash")}
-                className="cursor-pointer rounded-2xl p-4 flex flex-col items-center gap-2 transition-all"
-                style={paymentMethod === "cash"
-                  ? { background: "linear-gradient(135deg,rgba(16,185,129,0.12),rgba(52,211,153,0.08))", border: "2px solid #10b981", boxShadow: "0 4px 20px rgba(16,185,129,0.2)" }
-                  : { background: "#f9fafb", border: "2px solid #e5e7eb" }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: paymentMethod === "cash" ? "rgba(16,185,129,0.15)" : "#f3f4f6" }}>
-                  <Banknote size={20} style={{ color: paymentMethod === "cash" ? "#10b981" : "#9ca3af" }} />
-                </div>
-                <p className="font-black text-sm" style={{ color: paymentMethod === "cash" ? "#10b981" : "#374151" }}>💵 Cash</p>
-                <p className="text-xs text-center" style={{ color: "#6b7280" }}>Paguani kur të arrijë</p>
-              </motion.div>
-
-              <motion.div whileTap={{ scale: 0.97 }} onClick={() => setPaymentMethod("card")}
-                className="cursor-pointer rounded-2xl p-4 flex flex-col items-center gap-2 transition-all"
-                style={paymentMethod === "card"
-                  ? { background: "linear-gradient(135deg,rgba(99,102,241,0.12),rgba(139,92,246,0.08))", border: "2px solid #6366f1", boxShadow: "0 4px 20px rgba(99,102,241,0.25)" }
-                  : { background: "#f9fafb", border: "2px solid #e5e7eb" }}>
-                <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: paymentMethod === "card" ? "rgba(99,102,241,0.15)" : "#f3f4f6" }}>
-                  <CreditCard size={20} style={{ color: paymentMethod === "card" ? "#6366f1" : "#9ca3af" }} />
-                </div>
-                <p className="font-black text-sm" style={{ color: paymentMethod === "card" ? "#6366f1" : "#374151" }}>💳 Kartë</p>
-                <p className="text-xs text-center" style={{ color: "#6b7280" }}>Pagesë e sigurt online</p>
-              </motion.div>
+          {/* Payment */}
+          <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3">
+            <Banknote size={20} className="text-green-600" />
+            <div>
+              <p className="font-semibold text-green-800 text-sm">Pagesa me Cash</p>
+              <p className="text-green-600 text-xs">Paguani kur dorëzuesi të arrijë</p>
             </div>
-            {paymentMethod === "card" && (
-              <motion.div initial={{ opacity: 0, y: -8 }} animate={{ opacity: 1, y: 0 }}
-                className="mt-3 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-medium"
-                style={{ background: "rgba(99,102,241,0.07)", border: "1px solid rgba(99,102,241,0.2)", color: "#6366f1" }}>
-                <Lock size={12} /> Pagesë e enkriptuar · Powered by Stripe · Visa, Mastercard
-              </motion.div>
-            )}
           </div>
 
-          <motion.button whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.97 }}
-            type="submit" disabled={loading || cart.length === 0}
-            className="w-full font-black py-4 rounded-2xl transition-all text-base disabled:opacity-60 flex items-center justify-center gap-2 shadow-xl"
-            style={{
-              background: paymentMethod === "card"
-                ? "linear-gradient(135deg,#6366f1,#8b5cf6)"
-                : "linear-gradient(135deg,#0066FF,#00BFFF)",
-              color: "#fff",
-              boxShadow: paymentMethod === "card"
-                ? "0 8px 28px rgba(99,102,241,0.45)"
-                : "0 8px 28px rgba(0,102,255,0.4)"
-            }}>
-            {loading
-              ? <><div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" /> Duke procesuar...</>
-              : paymentMethod === "card"
-                ? <><CreditCard size={18} /> Paguaj me Kartë · {total.toFixed(2)}€</>
-                : <><Banknote size={18} /> Porosit me Cash · {total.toFixed(2)}€</>
-            }
-          </motion.button>
+          <button type="submit" disabled={loading || cart.length === 0}
+            className="w-full bg-blue-700 hover:bg-blue-800 disabled:opacity-60 text-white font-black py-4 rounded-xl transition-colors text-base">
+            {loading ? "Duke dërguar..." : `Porosit Tani · ${total.toFixed(2)}€`}
+          </button>
         </form>
       </div>
     </div>
