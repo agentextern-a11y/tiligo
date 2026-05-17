@@ -172,7 +172,7 @@ export default function AgentChatButton({
             </div>
 
             {/* ── MESSAGES ── */}
-            <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4 space-y-3 no-scrollbar">
+            <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4 space-y-3 no-scrollbar opacity-80 rounded-[48px]">
               {/* Welcome state */}
               {messages.length === 0 && !loading &&
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center py-6">
