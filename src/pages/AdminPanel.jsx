@@ -9,6 +9,7 @@ import StatementGenerator from "@/components/StatementGenerator";
 import SelectDrawer from "@/components/SelectDrawer";
 import { base44 } from "@/api/base44Client";
 import { motion, AnimatePresence } from "framer-motion";
+import { isAdminAuthenticated, clearAdminSession } from "@/lib/adminAuth";
 
 const W = "#009DE0";
 const G = "#30C48D";
@@ -26,7 +27,7 @@ const STATUS_STYLE = {
 const STATUS_LABELS = Object.fromEntries(Object.entries(STATUS_STYLE).map(([k, v]) => [k, v.label]));
 
 export default function AdminPanel() {
-  const [authed, setAuthed] = useState(() => localStorage.getItem("tiligo_admin") === "1");
+  const [authed, setAuthed] = useState(() => isAdminAuthenticated());
   const [tickets, setTickets] = useState([]);
   const [tab, setTab] = useState("dashboard");
   const [businesses, setBusinesses] = useState([]);
@@ -93,7 +94,7 @@ export default function AdminPanel() {
     setBusinesses(b); setDeliveries(d); setOrders(o); setLoading(false);
   };
 
-  const logout = () => { localStorage.removeItem("tiligo_admin"); setAuthed(false); };
+  const logout = () => { clearAdminSession(); setAuthed(false); };
   const approveBiz = async (id) => { await base44.entities.Business.update(id, { status: "approved" }); loadAll(); };
   const rejectBiz = async (id) => { await base44.entities.Business.update(id, { status: "rejected" }); loadAll(); };
   const deleteBiz = async (id) => { if (!confirm("Delete?")) return; await base44.entities.Business.delete(id); loadAll(); };

@@ -2,10 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Eye, EyeOff, Lock, User, AlertTriangle } from "lucide-react";
-
-const SECURITY_KEYWORD = "bardh";
-const ADMIN_USER = "root";
-const ADMIN_PASS = "Jari!!2018";
+import { verifySecurityKeyword, verifyAdminCredentials, setAdminSession } from "@/lib/adminAuth";
 
 export default function Administrator() {
   const navigate = useNavigate();
@@ -19,7 +16,7 @@ export default function Administrator() {
 
   const handleSecuritySubmit = (e) => {
     e.preventDefault();
-    if (securityAnswer.trim().toLowerCase() === SECURITY_KEYWORD) {
+    if (verifySecurityKeyword(securityAnswer)) {
       setStep("login");
     } else {
       if (attempted) {
@@ -34,8 +31,8 @@ export default function Administrator() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (loginForm.user === ADMIN_USER && loginForm.pass === ADMIN_PASS) {
-      localStorage.setItem("tiligo_admin", "1");
+    if (verifyAdminCredentials(loginForm.user, loginForm.pass)) {
+      setAdminSession();
       navigate("/admin");
     } else {
       setLoginError("Kredencialet janë të pasakta.");

@@ -462,6 +462,10 @@ export default function Home() {
         </div>
       </main>
 
+      {/* ═══ AI AGENTS ═══ */}
+      <AgentChatButton agentName="shopping_assistant" label="Shopping Assistant" emoji="🛒" accentColor="#39FF6B" position="right" />
+      <AgentChatButton agentName="delivery_tracker" label="Gjurmo Porosinë" emoji="🛵" accentColor="#00BFFF" position="left" />
+
       {/* ═══ STAFF PORTAL ═══ */}
       <StaffPortalSection />
 
@@ -515,6 +519,7 @@ export default function Home() {
 import { Facebook, Instagram, Globe } from "lucide-react";
 import StaffPortalSection from "@/components/StaffPortalSection";
 import TicketForm from "@/components/TicketForm";
+import AgentChatButton from "@/components/AgentChatButton";
 function SocialLinks() {
   const [links, setLinks] = useState({ facebook: "https://facebook.com/tiligoo", instagram: "", tiktok: "", website: "" });
   useEffect(() => {
