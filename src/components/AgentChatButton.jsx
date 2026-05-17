@@ -99,7 +99,7 @@ export default function AgentChatButton({
           style={{ bottom: 88, ...fabPos }}>
             {/* Ripple ring */}
             <motion.div
-            className="absolute inset-0 rounded-full"
+            className="absolute inset-0 rounded-full hidden"
             animate={{ scale: [1, 1.5, 1.5], opacity: [0.5, 0, 0] }}
             transition={{ repeat: Infinity, duration: 2.5, ease: "easeOut" }}
             style={{ background: accentColor }} />
