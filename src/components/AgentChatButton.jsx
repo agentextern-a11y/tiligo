@@ -107,7 +107,7 @@ export default function AgentChatButton({
             <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden"
           style={{ background: grad, boxShadow: `0 6px 28px ${accentColor}66` }}>
               {/* Logo watermark inside FAB */}
-              <img src="https://media.base44.com/images/public/69d519273be8cf966434f77a/8a48f3923_IMG_0105.jpeg" alt="" className="w-8 h-8 object-contain" style={{ filter: "brightness(0) invert(1)" }} />
+              <img src="https://media.base44.com/images/public/69d519273be8cf966434f77a/696d759d4_logo.ico" alt="" className="w-8 h-8 object-contain" style={{ filter: "brightness(0) invert(1)" }} />
             </div>
             {/* Tooltip label */}
             <span className="text-[10px] font-black px-2 py-0.5 rounded-full whitespace-nowrap shadow-lg"
