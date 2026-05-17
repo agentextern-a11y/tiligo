@@ -463,8 +463,26 @@ export default function Home() {
       </main>
 
       {/* ═══ AI AGENTS ═══ */}
-      <AgentChatButton agentName="shopping_assistant" label="Shopping Assistant" emoji="🛒" accentColor="#39FF6B" position="right" />
-      <AgentChatButton agentName="delivery_tracker" label="Gjurmo Porosinë" emoji="🛵" accentColor="#00BFFF" position="left" />
+      <AgentChatButton
+        agentName="shopping_assistant"
+        label="Shopping Assistant"
+        sublabel="Zgjidhni produktin e duhur 🍕"
+        emoji="🛒"
+        accentColor="#39FF6B"
+        secondColor="#00BFFF"
+        position="right"
+        quickReplies={["Çfarë keni sot?", "Oferta & Combo 🎯", "Restorantet e hapura"]}
+      />
+      <AgentChatButton
+        agentName="delivery_tracker"
+        label="Gjurmo Porosinë"
+        sublabel="Ku është porosia ime? 🛵"
+        emoji="📍"
+        accentColor="#00BFFF"
+        secondColor="#7c3aed"
+        position="left"
+        quickReplies={["Ku është porosia ime?", "Sa kohë ka mbetur?", "Porosia u dorëzua?"]}
+      />
 
       {/* ═══ STAFF PORTAL ═══ */}
       <StaffPortalSection />
