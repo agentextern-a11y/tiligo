@@ -172,7 +172,7 @@ export default function AgentChatButton({
             </div>
 
             {/* ── MESSAGES ── */}
-            <div className="relative z-10 flex-1 overflow-y-auto px-4 py-4 space-y-3 no-scrollbar opacity-80 rounded-[48px]">
+            <div className="relative z-10 flex-1 overflow-y-auto space-y-3 no-scrollbar opacity-80 rounded-[48px] px-3 py-3">
               {/* Welcome state */}
               {messages.length === 0 && !loading &&
             <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} className="text-center py-6">
@@ -180,7 +180,7 @@ export default function AgentChatButton({
                 animate={{ scale: [1, 1.06, 1] }} transition={{ repeat: Infinity, duration: 3 }}
                 className="w-16 h-16 rounded-3xl mx-auto mb-4 flex items-center justify-center shadow-xl"
                 style={{ background: grad }}>
-                    <img src={LOGO_DARK} alt="TiliGo" className="w-11 h-11 object-contain" style={{ filter: "brightness(0) invert(1)" }} />
+                    <img src="https://media.base44.com/images/public/69d519273be8cf966434f77a/696d759d4_logo.ico" alt="TiliGo" className="w-11 h-11 object-contain" style={{ filter: "brightness(0) invert(1)" }} />
                   </motion.div>
                   <p className="font-black text-base text-white mb-1">{label}</p>
                   <p className="text-xs mb-4" style={{ color: `${accentColor}88` }}>
