@@ -98,11 +98,11 @@ export default function AgentChatButton({
           className="fixed z-40 flex flex-col items-center gap-1"
           style={{ bottom: 88, ...fabPos }}>
             {/* Ripple ring */}
-            <motion.div
-            className="absolute inset-0 rounded-full hidden"
-            animate={{ scale: [1, 1.5, 1.5], opacity: [0.5, 0, 0] }}
-            transition={{ repeat: Infinity, duration: 2.5, ease: "easeOut" }}
-            style={{ background: accentColor }} />
+            
+
+
+
+          
           
             <div className="w-14 h-14 rounded-full flex items-center justify-center shadow-2xl relative overflow-hidden"
           style={{ background: grad, boxShadow: `0 6px 28px ${accentColor}66` }}>
