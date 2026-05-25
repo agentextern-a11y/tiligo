@@ -1,13 +1,18 @@
 workflows:
 
   tiligo_smart_pipeline:
-    name: Tiligo Smart CI/CD (Dev + Staging + Production)
+    name: Tiligo Smart CI/CD
 
     max_build_duration: 120
 
     environment:
       flutter: stable
       xcode: latest
+
+      vars:
+        APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
+        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
+        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
 
     cache:
       cache_paths:
@@ -18,63 +23,81 @@ workflows:
     scripts:
 
       # =========================
-      # CLEAN + DEPENDENCIES
+      # CLEAN + INSTALL
       # =========================
       - name: Clean & Install
         script: |
+          set -e
+
           flutter clean
           flutter pub get
-          cd ios && pod install && cd ..
+
+          cd ios
+          pod install
+          cd ..
 
       # =========================
-      # TEST (non-blocking for speed)
+      # TESTS (NON-BLOCKING)
       # =========================
       - name: Run Tests
         script: |
-          flutter test || true
+          set +e
+          flutter test
 
       # =========================
-      # BUILD LOGIC (SMART MODE)
+      # ANALYZE (NON-BLOCKING)
       # =========================
-      - name: Build Mode Decision
+      - name: Analyze Code
         script: |
-          echo "Branch: $CM_BRANCH"
+          set +e
+          flutter analyze
+
+      # =========================
+      # DETECT BUILD MODE
+      # =========================
+      - name: Detect Build Mode
+        script: |
+          set -e
+
+          echo "Current branch: $CM_BRANCH"
 
           if [ "$CM_BRANCH" = "develop" ]; then
-            echo "🧪 DEV MODE"
             echo "BUILD_MODE=dev" >> $CM_ENV
 
           elif [ "$CM_BRANCH" = "main" ]; then
-            echo "🚀 PRODUCTION MODE"
             echo "BUILD_MODE=production" >> $CM_ENV
 
           elif [[ "$CM_BRANCH" == v* ]]; then
-            echo "🏷 TAG RELEASE MODE"
             echo "BUILD_MODE=release" >> $CM_ENV
 
           else
-            echo "🧪 DEFAULT DEV MODE"
             echo "BUILD_MODE=dev" >> $CM_ENV
           fi
 
       # =========================
-      # BUILD (ALL MODES)
+      # BUILD IOS
       # =========================
       - name: Build iOS IPA
         script: |
+          set -e
+
+          echo "Build mode: $BUILD_MODE"
+
           if [ "$BUILD_MODE" = "dev" ]; then
             flutter build ios --debug --no-codesign
-
           else
             flutter build ipa --release
           fi
 
       # =========================
-      # VERSIONING (AUTO)
+      # AUTO VERSIONING
       # =========================
       - name: Auto Versioning
         script: |
+          set +e
+
           echo "Build number: $BUILD_NUMBER"
+
           cd ios
           agvtool new-version -all $BUILD_NUMBER || true
           cd ..
@@ -83,16 +106,18 @@ workflows:
       - build/ios/ipa/*.ipa
       - build/ios/iphoneos/Runner.app
 
+    publishing:
 
-        auth: integration
+      app_store_connect:
 
-        # =========================
-        # SMART DEPLOY RULES
-        # =========================
+        auth:
+          api_key: $APP_STORE_CONNECT_PRIVATE_KEY
+          key_id: $APP_STORE_CONNECT_KEY_ID
+          issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+
         submit_to_testflight: true
 
         beta_groups:
           - Internal Testers
 
-        # Production release only on main or tags
         submit_to_app_store: false
