@@ -3,9 +3,6 @@ workflows:
   tiligo_smart_pipeline:
     name: Tiligo Smart CI/CD (Dev + Staging + Production)
 
-    integrations:
-      app_store_connect: tiligo_asc
-
     max_build_duration: 120
 
     environment:
@@ -86,9 +83,6 @@ workflows:
       - build/ios/ipa/*.ipa
       - build/ios/iphoneos/Runner.app
 
-    publishing:
-
-      app_store_connect:
 
         auth: integration
 
