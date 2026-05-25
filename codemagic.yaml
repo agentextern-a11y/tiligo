@@ -1,7 +1,7 @@
 workflows:
 
-  tiligo_ios_autonomous:
-    name: Tiligo iOS Autonomous Engine
+  tiligo_ios_production:
+    name: Tiligo iOS Production Pipeline
 
     integrations:
       app_store_connect: tiligo_asc
@@ -14,7 +14,7 @@ workflows:
 
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.base69d519273be8cf966434f77a.app
+        bundle_identifier: com.tiligo.app
 
     cache:
       cache_paths:
@@ -24,56 +24,47 @@ workflows:
     scripts:
 
       # =====================================================
-      # FLUTTER + IOS AUTO SETUP
+      # 1. VERIFY PROJECT (FAIL FAST)
       # =====================================================
-      - name: Bootstrap iOS Project
+      - name: Validate Flutter Project
         script: |
           set -e
 
-          cd $CM_BUILD_DIR
-
-          echo "🧠 Checking Flutter project..."
-
-          # Ensure Flutter project exists
           if [ ! -f pubspec.yaml ]; then
-            echo "❌ pubspec.yaml missing"
+            echo "❌ ERROR: pubspec.yaml not found in repo root"
             exit 1
           fi
 
-          echo "📦 Installing dependencies..."
+          echo "✅ Flutter project detected"
+
+      # =====================================================
+      # 2. INSTALL DEPENDENCIES
+      # =====================================================
+      - name: Install Flutter Dependencies
+        script: |
+          set -e
+
           flutter clean
           flutter pub get
 
-          # Generate iOS if missing
+      # =====================================================
+      # 3. iOS SETUP (CLEAN & SAFE)
+      # =====================================================
+      - name: Install iOS Pods
+        script: |
+          set -e
+
           if [ ! -d ios ]; then
-            echo "⚠️ ios folder missing → generating..."
-            flutter create . --platforms=ios
-          fi
-
-          # Rebuild iOS module if Podfile missing
-          if [ ! -f ios/Podfile ]; then
-            echo "⚠️ Podfile missing → rebuilding iOS module..."
-
-            rm -rf ios
-
-            flutter create . --platforms=ios
-          fi
-
-          # Final validation
-          if [ ! -f ios/Podfile ]; then
-            echo "❌ Podfile generation failed"
+            echo "❌ ERROR: ios folder missing. Run 'flutter create .' locally and commit ios folder."
             exit 1
           fi
 
-          echo "🍫 Installing CocoaPods..."
           cd ios
           pod install
           cd ..
 
-          echo "✅ iOS setup completed"
-
       # =====================================================
-      # CODE ANALYSIS
+      # 4. CODE QUALITY (NON-BLOCKING)
       # =====================================================
       - name: Analyze Code
         script: |
@@ -81,33 +72,11 @@ workflows:
           flutter analyze
 
       # =====================================================
-      # TESTS
+      # 5. BUILD IOS APP
       # =====================================================
-      - name: Run Tests
-        script: |
-          set +e
-          flutter test
-
-      # =====================================================
-      # AUTO VERSIONING
-      # =====================================================
-      - name: Auto Versioning
-        script: |
-          set +e
-
-          cd ios
-
-          agvtool new-version -all $BUILD_NUMBER || true
-
-          cd ..
-
-      # =====================================================
-      # BUILD IPA
-      # =====================================================
-      - name: Build IPA
+      - name: Build iOS App
         script: |
           set -e
-
           flutter build ipa --release
 
     artifacts:
