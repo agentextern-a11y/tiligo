@@ -1,7 +1,7 @@
 workflows:
 
-  tiligo_autonomous_full_engine:
-    name: Tiligo Autonomous Full Bootstrap CI
+  tiligo_ios_autonomous:
+    name: Tiligo iOS Autonomous Engine
 
     integrations:
       app_store_connect: tiligo_asc
@@ -21,73 +21,63 @@ workflows:
     scripts:
 
       # =========================================================
-      # 🚀 FULL AUTONOMOUS BOOTSTRAP ENGINE
+      # 🚀 1. IOS PROJECT BOOTSTRAP (SELF-HEALING)
       # =========================================================
-      - name: Bootstrap Everything (Flutter + iOS + Android)
+      - name: iOS Bootstrap Engine
         script: |
           set -e
 
-          echo "🧠 STARTING FULL AUTONOMOUS BOOTSTRAP"
+          echo "🧠 iOS AUTONOMOUS BOOTSTRAP START"
 
           cd $CM_BUILD_DIR
 
-          # -----------------------------
-          # 1. Ensure Flutter project exists
-          # -----------------------------
+          # Ensure Flutter project exists
           if [ ! -f pubspec.yaml ]; then
-            echo "❌ No Flutter project detected → creating new one..."
-            flutter create . --platforms=ios,android
+            echo "❌ No Flutter project found → creating iOS-only Flutter project..."
+            flutter create . --platforms=ios
           fi
 
-          # -----------------------------
-          # 2. Ensure iOS + Android exist
-          # -----------------------------
-          if [ ! -d ios ] || [ ! -d android ]; then
-            echo "⚠️ Missing platforms → regenerating..."
-            flutter create . --platforms=ios,android
+          # Ensure iOS folder exists
+          if [ ! -d ios ]; then
+            echo "⚠️ Missing ios/ → regenerating..."
+            flutter create . --platforms=ios
           fi
 
-          # -----------------------------
-          # 3. Ensure Podfile exists
-          # -----------------------------
+          echo "📦 Installing Flutter dependencies..."
+          flutter clean
+          flutter pub get
+
+          # Ensure Podfile exists
           if [ ! -f ios/Podfile ]; then
             echo "⚠️ Podfile missing → rebuilding iOS module..."
             rm -rf ios
             flutter create . --platforms=ios
           fi
 
-          # -----------------------------
-          # 4. Install dependencies
-          # -----------------------------
-          echo "📦 Installing Flutter dependencies..."
-          flutter clean
-          flutter pub get
-
-          # -----------------------------
-          # 5. CocoaPods install
-          # -----------------------------
-          echo "🍫 Installing CocoaPods..."
+          echo "🍫 CocoaPods install starting..."
           cd ios
           pod install
           cd ..
 
-          echo "✅ BOOTSTRAP COMPLETE"
+          echo "✅ iOS BOOTSTRAP COMPLETE"
 
       # =========================================================
-      # 🧪 QUALITY CHECK
+      # 🧪 2. QUALITY CHECK (SAFE)
       # =========================================================
-      - name: Analyze & Test
+      - name: Code Quality
         script: |
           set +e
           flutter analyze
           flutter test
 
       # =========================================================
-      # 🚀 BUILD ENGINE
+      # 🚀 3. BUILD IOS APP
       # =========================================================
       - name: Build iOS App
         script: |
           set -e
+
+          echo "🚀 Building iOS App..."
 
           if [ "$CM_BRANCH" = "main" ]; then
             flutter build ipa --release
@@ -96,14 +86,17 @@ workflows:
           fi
 
       # =========================================================
-      # 🔢 VERSIONING
+      # 🔢 4. AUTO VERSIONING
       # =========================================================
-      - name: Auto Versioning
+      - name: Versioning
         script: |
           set +e
+
           cd ios
           agvtool new-version -all $BUILD_NUMBER || true
           cd ..
+
+          echo "🔢 Version updated"
 
     artifacts:
       - build/ios/ipa/*.ipa
