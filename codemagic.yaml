@@ -27,7 +27,8 @@ workflows:
     cache:
       cache_paths:
         - ~/.npm
-        - ~/.cache/CocoaPods
+        - ~/.cache/npm
+        - ~/.cocoapods
         - ~/Library/Caches/CocoaPods
         - ios/App/Pods
 
@@ -37,14 +38,13 @@ workflows:
       branch_patterns:
         - pattern: main
           include: true
-          source: true
 
     scripts:
-      - name: Install Node dependencies
+      - name: Install dependencies
         script: |
           npm ci
 
-      - name: Build web assets
+      - name: Build web app
         script: |
           npm run build
 
@@ -52,12 +52,13 @@ workflows:
         script: |
           npx cap sync ios
 
-      - name: Install CocoaPods dependencies
+      - name: Install Pods (clean + deterministic)
         script: |
           cd ios/App
-          pod install
+          pod deintegrate || true
+          pod install --repo-update
 
-      - name: Configure iOS code signing
+      - name: iOS code signing setup
         script: |
           xcode-project use-profiles
 
@@ -73,16 +74,13 @@ workflows:
 
     publishing:
       app_store_connect:
-        auth: integration
-
         submit_to_testflight: true
-
         beta_groups:
           - Internal Testers
 
       email:
         recipients:
-          - your@email.com
+          - elgrandexx@icloud.com
         notify:
           success: true
           failure: true
