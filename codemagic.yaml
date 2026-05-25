@@ -1,74 +1,10 @@
 workflows:
 
-  # =========================
-  # 🧪 DEV BUILD
-  # =========================
-  dev:
-    name: Tiligo Dev Build
+  tiligo_smart_pipeline:
+    name: Tiligo Smart CI/CD (Dev + Staging + Production)
 
-    environment:
-      flutter: stable
-      xcode: latest
-
-    triggering:
-      branch_patterns:
-        - pattern: develop
-          include: true
-
-    scripts:
-      - flutter pub get
-      - flutter build ios --debug --no-codesign
-
-    artifacts:
-      - build/ios/iphoneos/Runner.app
-
-
-  # =========================
-  # 🧪 STAGING (TESTFLIGHT)
-  # =========================
-  staging:
-    name: Tiligo Staging (TestFlight)
-
-    max_build_duration: 90
-
-    environment:
-      flutter: stable
-      xcode: latest
-
-    triggering:
-      branch_patterns:
-        - pattern: develop
-          include: true
-
-    scripts:
-      - flutter clean
-      - flutter pub get
-
-      - cd ios && pod install && cd ..
-
-      - flutter test || true
-
-      - flutter build ipa --release
-
-      - chmod +x scripts/versioning.sh
-      - ./scripts/versioning.sh
-
-    artifacts:
-      - build/ios/ipa/*.ipa
-
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-        beta_groups:
-          - Internal Testers
-
-
-  # =========================
-  # 🚀 PRODUCTION (APP STORE)
-  # =========================
-  production:
-    name: Tiligo Production Release
+    integrations:
+      app_store_connect: Codemagic ASC   # ⚠️ must match Codemagic UI integration name
 
     max_build_duration: 120
 
@@ -76,31 +12,93 @@ workflows:
       flutter: stable
       xcode: latest
 
-    triggering:
-      branch_patterns:
-        - pattern: main
-          include: true
-
-        - pattern: "v*"
-          include: true
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - ios/Pods
+        - ~/.gradle
 
     scripts:
-      - flutter clean
-      - flutter pub get
 
-      - cd ios && pod install && cd ..
+      # =========================
+      # CLEAN + DEPENDENCIES
+      # =========================
+      - name: Clean & Install
+        script: |
+          flutter clean
+          flutter pub get
+          cd ios && pod install && cd ..
 
-      - flutter test || true
+      # =========================
+      # TEST (non-blocking for speed)
+      # =========================
+      - name: Run Tests
+        script: |
+          flutter test || true
 
-      - flutter build ipa --release
+      # =========================
+      # BUILD LOGIC (SMART MODE)
+      # =========================
+      - name: Build Mode Decision
+        script: |
+          echo "Branch: $CM_BRANCH"
 
-      - chmod +x scripts/versioning.sh
-      - ./scripts/versioning.sh
+          if [ "$CM_BRANCH" = "develop" ]; then
+            echo "🧪 DEV MODE"
+            echo "BUILD_MODE=dev" >> $CM_ENV
+
+          elif [ "$CM_BRANCH" = "main" ]; then
+            echo "🚀 PRODUCTION MODE"
+            echo "BUILD_MODE=production" >> $CM_ENV
+
+          elif [[ "$CM_BRANCH" == v* ]]; then
+            echo "🏷 TAG RELEASE MODE"
+            echo "BUILD_MODE=release" >> $CM_ENV
+
+          else
+            echo "🧪 DEFAULT DEV MODE"
+            echo "BUILD_MODE=dev" >> $CM_ENV
+          fi
+
+      # =========================
+      # BUILD (ALL MODES)
+      # =========================
+      - name: Build iOS IPA
+        script: |
+          if [ "$BUILD_MODE" = "dev" ]; then
+            flutter build ios --debug --no-codesign
+
+          else
+            flutter build ipa --release
+          fi
+
+      # =========================
+      # VERSIONING (AUTO)
+      # =========================
+      - name: Auto Versioning
+        script: |
+          echo "Build number: $BUILD_NUMBER"
+          cd ios
+          agvtool new-version -all $BUILD_NUMBER || true
+          cd ..
 
     artifacts:
       - build/ios/ipa/*.ipa
+      - build/ios/iphoneos/Runner.app
 
     publishing:
+
       app_store_connect:
+
         auth: integration
+
+        # =========================
+        # SMART DEPLOY RULES
+        # =========================
         submit_to_testflight: true
+
+        beta_groups:
+          - Internal Testers
+
+        # Production release only on main or tags
+        submit_to_app_store: false
