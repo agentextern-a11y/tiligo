@@ -2,6 +2,8 @@ workflows:
   ios-app-store:
     name: TiliGo iOS App Store Build
 
+    instance_type: mac_mini_m2
+
     max_build_duration: 120
 
     environment:
@@ -16,19 +18,29 @@ workflows:
       vars:
         XCODE_WORKSPACE: "ios/App/App.xcworkspace"
         XCODE_SCHEME: "App"
+        BUNDLE_ID: "com.tiligo.app"
         APP_STORE_APPLE_ID: "6771979690"
 
-        APP_STORE_CONNECT_API_KEY_JSON:
-          encrypted: true
+      groups:
+        - app_store_credentials
 
     cache:
       cache_paths:
         - ~/.npm
-        - ~/.cocoapods
+        - ~/.cache/CocoaPods
         - ~/Library/Caches/CocoaPods
+        - ios/App/Pods
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
 
     scripts:
-      - name: Install dependencies
+      - name: Install Node dependencies
         script: |
           npm ci
 
@@ -40,47 +52,34 @@ workflows:
         script: |
           npx cap sync ios
 
-      - name: Install CocoaPods
+      - name: Install CocoaPods dependencies
         script: |
           cd ios/App
-          pod install --repo-update
+          pod install
 
-      - name: Setup App Store Connect API Key
-        script: |
-          mkdir -p ~/.appstoreconnect/private_keys
-
-          cat > ~/.appstoreconnect/private_keys/AuthKey.json <<EOF
-          $APP_STORE_CONNECT_API_KEY_JSON
-          EOF
-
-      - name: Configure code signing
+      - name: Configure iOS code signing
         script: |
           xcode-project use-profiles
 
       - name: Build IPA
         script: |
-          xcode-project build-ipa 
-            --workspace "$XCODE_WORKSPACE" 
+          xcode-project build-ipa \
+            --workspace "$XCODE_WORKSPACE" \
             --scheme "$XCODE_SCHEME"
 
-      - name: Upload to TestFlight
-        script: |
-          IPA_PATH=$(find build/ios/ipa -name ".ipa" | head -1)
-
-          echo "Uploading $IPA_PATH"
-
-          xcrun altool 
-            --upload-app 
-            --type ios 
-            --file "$IPA_PATH" 
-            --apiKey "7GD5Z5D4G7" 
-            --apiIssuer "6d7acece-2356-43c3-9946-6fd2cda5bf7d"
-
     artifacts:
-      - build/ios/ipa/.ipa
+      - build/ios/ipa/*.ipa
       - /tmp/xcodebuild_logs/*.log
 
     publishing:
+      app_store_connect:
+        auth: integration
+
+        submit_to_testflight: true
+
+        beta_groups:
+          - Internal Testers
+
       email:
         recipients:
           - your@email.com
