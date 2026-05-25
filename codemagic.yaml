@@ -1,260 +1,265 @@
-tiligo_smart_pipeline:
-  name: Tiligo Enterprise CI/CD Pipeline
-  trigger:
-    branches:
-      - main
-      - develop
-      - release/*
-      - hotfix/*
-    tags:
-      - v*
-  
-  integrations:
-    app_store_connect: tiligo_asc
-
-  max_build_duration: 120
-
-  environment:
-    flutter: 3.22.0
-    xcode: 15.4
-    ruby: 3.2.0
-
-  cache:
-    key: "${CM_REPO}-cache-{{ checksum 'pubspec.lock' }}-{{ checksum 'ios/Podfile.lock' }}"
-    cache_paths:
-      - ~/.pub-cache
-      - ~/.gradle/caches
-      - ios/Pods
-      - build/ios/.symlinks
-
-  scripts:
+workflows:
+  tiligo_smart_pipeline:
+    name: Tiligo Enterprise CI/CD Pipeline
+    instance_type: mac_mini_m2
+    
     # =========================================================
-    # ENVIRONMENT VALIDATION
+    # ROOT-LEVEL TRIGGERS
     # =========================================================
-    - name: Validate Build Environment
-      script: |
-        set -e
-        echo "✓ Validating toolchain..."
-        
-        command -v flutter >/dev/null 2>&1 || { echo "❌ Flutter missing"; exit 1; }
-        command -v pod >/dev/null 2>&1 || { echo "❌ CocoaPods missing"; exit 1; }
-        
-        flutter --version
-        xcodebuild -version
-        
-        echo "✓ Environment ready"
-
-    - name: Initialize & Cache Dependencies
-      script: |
-        set -e
-        
-        echo "📦 Installing dependencies..."
-        flutter clean
-        flutter pub get --no-example
-        
-        if [ -d "ios" ]; then
-          echo "📱 Installing CocoaPods..."
-          cd ios
-          pod install --repo-update --silent
-          cd ..
-        fi
-        
-        echo "✓ Dependencies ready"
-
+    triggering:
+      events:
+        - push
+        - pull_request
+        - tag
+      branches:
+        include:
+          - main
+          - develop
+          - release/*
+          - hotfix/*
+        exclude:
+          - docs/*
+          - '*.md'
+      tags:
+        include:
+          - v*
+      cancel_previous_builds: true
+    
     # =========================================================
-    # QUALITY ASSURANCE (Parallel Ready)
+    # ROOT-LEVEL INTEGRATIONS
     # =========================================================
-    - name: Static Code Analysis
-      script: |
-        set -e
-        
-        echo "🔍 Running Flutter analyzer..."
-        flutter analyze --fatal-infos --fatal-warnings
-        
-        echo "✓ Code analysis passed"
-
-    - name: Unit & Widget Tests
-      script: |
-        set -e
-        
-        echo "🧪 Running test suite..."
-        flutter test --coverage --test-randomize-ordering-seed=random
-        
-        echo "✓ All tests passed"
-
-    - name: Coverage Report
-      script: |
-        set -e
-        
-        if [ -f "coverage/lcov.info" ]; then
-          echo "📊 Test coverage:"
-          genhtml coverage/lcov.info -o coverage/html --quiet || true
-          grep -E "lines.*:" coverage/html/index.html || true
-        fi
-
+    integrations:
+      app_store_connect: tiligo_asc
+      slack: tiligo_slack_webhook
+    
     # =========================================================
-    # RELEASE STRATEGY (Prioritized)
+    # ROOT-LEVEL SETTINGS
     # =========================================================
-    - name: Determine Deployment Strategy
-      script: |
-        set -e
-        
-        BRANCH="${CM_BRANCH:-${CM_TAG}}"
-        echo "📍 Source: $BRANCH"
-        
-        # Priority: Tag > Hotfix > Release > Main > Develop
-        if [[ "$BRANCH" == v* ]] || [[ "${CM_TAG}" != "" ]]; then
-          BUILD_MODE="production"
-          EXPORT_METHOD="app-store"
-          echo "🏷️ Release tag build"
+    max_build_duration: 120
+    environment_variables:
+      APP_ENV: production
+      FLUTTER_ROOT: ~/development/flutter
+    
+    # =========================================================
+    # CACHE CONFIGURATION
+    # =========================================================
+    cache:
+      cache_paths:
+        - ~/.pub-cache
+        - ~/.gradle/caches
+        - ios/Pods
+        - build/ios/.symlinks
+      clear_cache_on_branch_change: true
+    
+    # =========================================================
+    # ENVIRONMENT
+    # =========================================================
+    environment:
+      flutter: 3.22.0
+      xcode: 15.4
+      ruby: 3.2.0
+      cocoapods: 1.15.2
+    
+    # =========================================================
+    # SCRIPTS
+    # =========================================================
+    scripts:
+      # =========================================================
+      # ENVIRONMENT VALIDATION
+      # =========================================================
+      - name: Validate Build Environment
+        script: |
+          set -e
+          echo "✓ Validating toolchain..."
           
-        elif [[ "$BRANCH" == hotfix/* ]]; then
-          BUILD_MODE="production"
-          EXPORT_METHOD="app-store"
-          echo "🚑 Hotfix build"
+          command -v flutter >/dev/null 2>&1 || { echo "❌ Flutter missing"; exit 1; }
+          command -v pod >/dev/null 2>&1 || { echo "❌ CocoaPods missing"; exit 1; }
           
-        elif [[ "$BRANCH" == release/* ]]; then
-          BUILD_MODE="production"
-          EXPORT_METHOD="app-store"
-          echo "📦 Release candidate build"
+          flutter --version
+          xcodebuild -version
           
-        elif [[ "$BRANCH" == "main" ]]; then
-          BUILD_MODE="production"
-          EXPORT_METHOD="app-store"
-          echo "🎯 Main branch build"
+          echo "✓ Environment ready"
+      
+      - name: Initialize & Cache Dependencies
+        script: |
+          set -e
           
-        elif [[ "$BRANCH" == "develop" ]]; then
-          BUILD_MODE="development"
-          EXPORT_METHOD="development"
-          echo "🧪 Development build"
+          echo "📦 Installing dependencies..."
+          flutter clean
+          flutter pub get --no-example
           
-        else
-          BUILD_MODE="debug"
-          EXPORT_METHOD="development"
-          echo "🔧 Feature branch build"
-        fi
-        
-        echo "BUILD_MODE=$BUILD_MODE" >> $CM_ENV
-        echo "EXPORT_METHOD=$EXPORT_METHOD" >> $CM_ENV
-        
-        echo "✅ Mode: $BUILD_MODE | Export: $EXPORT_METHOD"
-
-    # =========================================================
-    # VERSION MANAGEMENT
-    # =========================================================
-    - name: Apply Semantic Versioning
-      script: |
-        set -e
-        
-        BASE_VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
-        BUILD_NUMBER="${BUILD_NUMBER:-$(date +%Y%m%d%H%M)}"
-        FULL_VERSION="${BASE_VERSION}+${BUILD_NUMBER}"
-        
-        echo "📌 Version: $FULL_VERSION"
-        
-        # Update pubspec
-        sed -i '' "s/version: .*/version: $FULL_VERSION/" pubspec.yaml
-        
-        # Update iOS
-        if [ -d "ios" ]; then
-          cd ios
-          agvtool new-marketing-version "$BASE_VERSION" || true
-          agvtool new-version -all "$BUILD_NUMBER" || true
-          cd ..
-        fi
-        
-        echo "VERSION=$FULL_VERSION" >> $CM_ENV
-
-    # =========================================================
-    # BUILD EXECUTION
-    # =========================================================
-    - name: Build iOS Application
-      script: |
-        set -e
-        
-        echo "🔨 Building iOS ($BUILD_MODE)..."
-        
-        case "$BUILD_MODE" in
-          production)
-            flutter build ipa \
-              --release \
-              --export-options-plist=ios/exportOptions.plist \
-              --build-number="$BUILD_NUMBER" \
-              --dart-define=ENV=production
-            ;;
-          development)
-            flutter build ios \
-              --debug \
-              --no-codesign \
-              --simulator
-            ;;
-          debug)
-            flutter build ios \
-              --debug \
-              --no-codesign
-            ;;
-        esac
-        
-        echo "✅ Build complete"
-
-    - name: Validate Build Artifacts
-      script: |
-        set -e
-        
-        if [ "$BUILD_MODE" = "production" ]; then
-          if [ ! -f "build/ios/ipa/*.ipa" ]; then
-            echo "❌ IPA file not generated"
-            exit 1
+          if [ -d "ios" ]; then
+            echo "📱 Installing CocoaPods..."
+            cd ios
+            pod install --repo-update --silent
+            cd ..
           fi
-          echo "✅ IPA ready for distribution"
-        else
-          if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
-            echo "❌ .app bundle not generated"
-            exit 1
+          
+          echo "✓ Dependencies ready"
+      
+      # =========================================================
+      # QUALITY ASSURANCE
+      # =========================================================
+      - name: Static Code Analysis
+        script: |
+          set -e
+          
+          echo "🔍 Running Flutter analyzer..."
+          flutter analyze --fatal-infos --fatal-warnings
+          
+          echo "✓ Code analysis passed"
+      
+      - name: Unit & Widget Tests
+        script: |
+          set -e
+          
+          echo "🧪 Running test suite..."
+          flutter test --coverage --test-randomize-ordering-seed=random
+          
+          echo "✓ All tests passed"
+      
+      - name: Coverage Report
+        script: |
+          set -e
+          
+          if [ -f "coverage/lcov.info" ]; then
+            echo "📊 Test coverage generated"
           fi
-          echo "✅ .app bundle ready"
-        fi
-
-  artifacts:
-    - "build/ios/ipa/Tiligo_${VERSION}.ipa"
-    - "build/ios/iphoneos/Runner.app"
-    - "coverage/lcov.info"
-    - "test_report.xml"
-
-  publishing:
-    app_store_connect:
-      auth: integration
-      api_key: ${APP_STORE_CONNECT_API_KEY}
-      api_issuer: ${APP_STORE_CONNECT_ISSUER}
       
-      submit_to_testflight: ${BUILD_MODE == "production"}
+      # =========================================================
+      # RELEASE STRATEGY
+      # =========================================================
+      - name: Determine Deployment Strategy
+        script: |
+          set -e
+          
+          BRANCH="${CM_BRANCH:-${CM_TAG}}"
+          echo "📍 Source: $BRANCH"
+          
+          if [[ "$BRANCH" == v* ]] || [[ "${CM_TAG}" != "" ]]; then
+            BUILD_MODE="production"
+            echo "🏷️ Release tag build"
+          elif [[ "$BRANCH" == hotfix/* ]]; then
+            BUILD_MODE="production"
+            echo "🚑 Hotfix build"
+          elif [[ "$BRANCH" == release/* ]]; then
+            BUILD_MODE="production"
+            echo "📦 Release candidate build"
+          elif [[ "$BRANCH" == "main" ]]; then
+            BUILD_MODE="production"
+            echo "🎯 Main branch build"
+          elif [[ "$BRANCH" == "develop" ]]; then
+            BUILD_MODE="development"
+            echo "🧪 Development build"
+          else
+            BUILD_MODE="debug"
+            echo "🔧 Feature branch build"
+          fi
+          
+          echo "BUILD_MODE=$BUILD_MODE" >> $CM_ENV
+          echo "✅ Mode: $BUILD_MODE"
       
-      beta_groups:
-        - name: "Internal Testers"
-          enabled: ${BUILD_MODE == "production"}
-        - name: "QA Team"
-          enabled: ${BUILD_MODE == "development"}
+      # =========================================================
+      # VERSION MANAGEMENT
+      # =========================================================
+      - name: Apply Semantic Versioning
+        script: |
+          set -e
+          
+          BASE_VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
+          BUILD_NUMBER="${BUILD_NUMBER:-$(date +%Y%m%d%H%M)}"
+          FULL_VERSION="${BASE_VERSION}+${BUILD_NUMBER}"
+          
+          echo "📌 Version: $FULL_VERSION"
+          
+          sed -i '' "s/version: .*/version: $FULL_VERSION/" pubspec.yaml
+          
+          if [ -d "ios" ]; then
+            cd ios
+            agvtool new-marketing-version "$BASE_VERSION" || true
+            agvtool new-version -all "$BUILD_NUMBER" || true
+            cd ..
+          fi
+          
+          echo "VERSION=$FULL_VERSION" >> $CM_ENV
       
-      skip_metadata: true
-      skip_screenshots: true
-      skip_binary_upload: ${BUILD_MODE == "debug"}
+      # =========================================================
+      # BUILD EXECUTION
+      # =========================================================
+      - name: Build iOS Application
+        script: |
+          set -e
+          
+          echo "🔨 Building iOS ($BUILD_MODE)..."
+          
+          case "$BUILD_MODE" in
+            production)
+              flutter build ipa \
+                --release \
+                --build-number="$BUILD_NUMBER" \
+                --dart-define=ENV=production
+              ;;
+            development)
+              flutter build ios \
+                --debug \
+                --no-codesign
+              ;;
+            debug)
+              flutter build ios \
+                --debug \
+                --no-codesign
+              ;;
+          esac
+          
+          echo "✅ Build complete"
       
-      distribute_external: false
+      - name: Validate Build Artifacts
+        script: |
+          set -e
+          
+          if [ "$BUILD_MODE" = "production" ]; then
+            if [ ! -f "build/ios/ipa/*.ipa" ]; then
+              echo "❌ IPA file not generated"
+              exit 1
+            fi
+            echo "✅ IPA ready for distribution"
+          else
+            if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
+              echo "❌ .app bundle not generated"
+              exit 1
+            fi
+            echo "✅ .app bundle ready"
+          fi
+    
+    # =========================================================
+    # ROOT-LEVEL ARTIFACTS
+    # =========================================================
+    artifacts:
+      - build/ios/ipa/*.ipa
+      - build/ios/iphoneos/Runner.app
+      - coverage/lcov.info
+      - build/coverage/html/
+    
+    # =========================================================
+    # ROOT-LEVEL PUBLISHING
+    # =========================================================
+    publishing:
+      app_store_connect:
+        auth: integration
+        submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
+          - QA Team
+        skip_wait_for_build_processing: false
       
-      whats_new:
-        en: |
-          • Automated build v${VERSION}
-          • Performance improvements
-          • Bug fixes
-
-  notifications:
-    slack:
-      webhook: ${SLACK_WEBHOOK}
-      channel: "#ci-cd"
-      on_success: ${BUILD_MODE == "production"}
-      on_failure: always
+      slack:
+        channel: '#ci-cd'
+        notify_on_build_start: true
+        notify_on_success: true
+        notify_on_failure: true
       
-    email:
-      recipients:
-        - engineering@tiligo.com
-      on_failure: always
+      email:
+        recipients:
+          - engineering@tiligo.com
+        notify_on_success: false
+        notify_on_failure: true
