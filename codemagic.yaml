@@ -1,7 +1,11 @@
 workflows:
 
   tiligo_autonomous_engine:
-    name: Tiligo Autonomous CI/CD Engine
+    name: Tiligo CI/CD Pipeline (Production Ready)
+
+    # REQUIRED: matches your created Codemagic integration
+    integrations:
+      app_store_connect: tiligo_asc
 
     max_build_duration: 120
 
@@ -18,52 +22,26 @@ workflows:
     scripts:
 
       # =========================================================
-      # 1. REPOSITORY INTELLIGENCE SCAN
+      # PROJECT CHECK
       # =========================================================
-      - name: Repository Intelligence Scan
+      - name: Validate Flutter Project
         script: |
           set -e
 
-          echo "🧠 Scanning repository..."
+          echo "Checking for Flutter project..."
 
-          echo ""
-          echo "Full structure:"
-          ls -R .
-
-          echo ""
-          echo "Searching for Flutter project..."
-          FLUTTER_PATH=$(find . -name pubspec.yaml | head -n 1)
-
-          if [ -z "$FLUTTER_PATH" ]; then
-            echo ""
-            echo "⚠️ No Flutter project detected"
-
-            echo ""
-            echo "Checking if Flutter can be initialized..."
-
-            if [ -f "README.md" ]; then
-              echo "Repo exists but no Flutter app found."
-              echo "Stopping safely."
-            fi
-
-            echo ""
-            echo "❌ EXIT: This repository is not a Flutter application"
+          if [ ! -f "pubspec.yaml" ]; then
+            echo "ERROR: pubspec.yaml not found in repo root"
+            echo "Fix: Ensure Flutter project is at repository root OR adjust repo structure"
             exit 1
           fi
 
-          FLUTTER_DIR=$(dirname "$FLUTTER_PATH")
-          echo "FLUTTER_DIR=$FLUTTER_DIR" >> $CM_ENV
-
-          echo "✅ Flutter project found at: $FLUTTER_DIR"
-
       # =========================================================
-      # 2. CLEAN + DEPENDENCIES
+      # CLEAN + INSTALL
       # =========================================================
-      - name: Setup Flutter Project
+      - name: Clean & Install Dependencies
         script: |
           set -e
-
-          cd $FLUTTER_DIR
 
           flutter clean
           flutter pub get
@@ -73,70 +51,56 @@ workflows:
           cd ..
 
       # =========================================================
-      # 3. TESTING LAYER
+      # TESTS
       # =========================================================
       - name: Run Tests
         script: |
           set +e
-          cd $FLUTTER_DIR
           flutter test
 
       # =========================================================
-      # 4. STATIC ANALYSIS
+      # ANALYSIS
       # =========================================================
-      - name: Code Analysis
+      - name: Analyze Code
         script: |
           set +e
-          cd $FLUTTER_DIR
           flutter analyze
 
       # =========================================================
-      # 5. BUILD MODE ENGINE
+      # BUILD MODE
       # =========================================================
-      - name: Determine Build Mode
+      - name: Build iOS App
         script: |
           set -e
 
           if [ "$CM_BRANCH" = "main" ]; then
-            echo "BUILD_MODE=production" >> $CM_ENV
-          else
-            echo "BUILD_MODE=development" >> $CM_ENV
-          fi
-
-          echo "Mode: $BUILD_MODE"
-
-      # =========================================================
-      # 6. BUILD ENGINE
-      # =========================================================
-      - name: Build Application
-        script: |
-          set -e
-
-          cd $FLUTTER_DIR
-
-          if [ "$BUILD_MODE" = "development" ]; then
-            flutter build ios --debug --no-codesign
-          else
+            echo "Production build"
             flutter build ipa --release
+          else
+            echo "Development build"
+            flutter build ios --debug --no-codesign
           fi
 
       # =========================================================
-      # 7. VERSIONING ENGINE
+      # VERSIONING
       # =========================================================
       - name: Auto Versioning
         script: |
           set +e
 
-          cd $FLUTTER_DIR/ios
+          cd ios
           agvtool new-version -all $BUILD_NUMBER || true
+          cd ..
 
     artifacts:
-      - $FLUTTER_DIR/build/ios/ipa/*.ipa
-      - $FLUTTER_DIR/build/ios/iphoneos/Runner.app
+      - build/ios/ipa/*.ipa
+      - build/ios/iphoneos/Runner.app
 
     publishing:
 
       app_store_connect:
+
+        # REQUIRED for your Codemagic integration setup
         auth: integration
 
         submit_to_testflight: true
