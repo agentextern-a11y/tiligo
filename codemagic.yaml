@@ -1,7 +1,10 @@
 workflows:
 
   tiligo_smart_pipeline:
-    name: Tiligo Smart CI/CD
+    name: Tiligo Enterprise CI/CD Pipeline
+
+    integrations:
+      app_store_connect: tiligo_asc
 
     max_build_duration: 120
 
@@ -9,60 +12,62 @@ workflows:
       flutter: stable
       xcode: latest
 
-      vars:
-        APP_STORE_CONNECT_KEY_ID: $APP_STORE_CONNECT_KEY_ID
-        APP_STORE_CONNECT_ISSUER_ID: $APP_STORE_CONNECT_ISSUER_ID
-        APP_STORE_CONNECT_PRIVATE_KEY: $APP_STORE_CONNECT_PRIVATE_KEY
-
     cache:
       cache_paths:
         - ~/.pub-cache
-        - ios/Pods
         - ~/.gradle
+        - ios/Pods
 
     scripts:
 
-      # =========================
-      # CLEAN + INSTALL
-      # =========================
-      - name: Clean & Install
+      # =========================================================
+      # ENVIRONMENT INITIALIZATION
+      # =========================================================
+      - name: Initialize Build Environment
         script: |
           set -e
 
+          echo "Initializing Flutter environment..."
+
           flutter clean
           flutter pub get
+
+          echo "Installing CocoaPods dependencies..."
 
           cd ios
           pod install
           cd ..
 
-      # =========================
-      # TESTS (NON-BLOCKING)
-      # =========================
-      - name: Run Tests
+      # =========================================================
+      # QUALITY ASSURANCE
+      # =========================================================
+      - name: Execute Automated Tests
         script: |
           set +e
+
+          echo "Running Flutter test suite..."
+
           flutter test
 
-      # =========================
-      # ANALYZE (NON-BLOCKING)
-      # =========================
-      - name: Analyze Code
+      - name: Perform Static Code Analysis
         script: |
           set +e
+
+          echo "Analyzing project source code..."
+
           flutter analyze
 
-      # =========================
-      # DETECT BUILD MODE
-      # =========================
-      - name: Detect Build Mode
+      # =========================================================
+      # RELEASE STRATEGY DETECTION
+      # =========================================================
+      - name: Determine Deployment Mode
         script: |
           set -e
 
           echo "Current branch: $CM_BRANCH"
 
           if [ "$CM_BRANCH" = "develop" ]; then
-            echo "BUILD_MODE=dev" >> $CM_ENV
+            echo "BUILD_MODE=development" >> $CM_ENV
 
           elif [ "$CM_BRANCH" = "main" ]; then
             echo "BUILD_MODE=production" >> $CM_ENV
@@ -71,32 +76,42 @@ workflows:
             echo "BUILD_MODE=release" >> $CM_ENV
 
           else
-            echo "BUILD_MODE=dev" >> $CM_ENV
+            echo "BUILD_MODE=development" >> $CM_ENV
           fi
 
-      # =========================
-      # BUILD IOS
-      # =========================
-      - name: Build iOS IPA
+          echo "Resolved build mode: $BUILD_MODE"
+
+      # =========================================================
+      # APPLICATION BUILD PROCESS
+      # =========================================================
+      - name: Build iOS Application
         script: |
           set -e
 
-          echo "Build mode: $BUILD_MODE"
+          echo "Starting iOS build pipeline..."
 
-          if [ "$BUILD_MODE" = "dev" ]; then
+          if [ "$BUILD_MODE" = "development" ]; then
+
+            echo "Generating development build..."
+
             flutter build ios --debug --no-codesign
+
           else
+
+            echo "Generating signed release IPA..."
+
             flutter build ipa --release
+
           fi
 
-      # =========================
-      # AUTO VERSIONING
-      # =========================
-      - name: Auto Versioning
+      # =========================================================
+      # AUTOMATED VERSION MANAGEMENT
+      # =========================================================
+      - name: Apply Automated Build Versioning
         script: |
           set +e
 
-          echo "Build number: $BUILD_NUMBER"
+          echo "Applying build number: $BUILD_NUMBER"
 
           cd ios
           agvtool new-version -all $BUILD_NUMBER || true
@@ -110,10 +125,7 @@ workflows:
 
       app_store_connect:
 
-        auth:
-          api_key: $APP_STORE_CONNECT_PRIVATE_KEY
-          key_id: $APP_STORE_CONNECT_KEY_ID
-          issuer_id: $APP_STORE_CONNECT_ISSUER_ID
+        auth: integration
 
         submit_to_testflight: true
 
