@@ -1,86 +1,101 @@
 workflows:
-  ios-app-store:
-    name: TiliGo iOS App Store Build
 
-    instance_type: mac_mini_m2
+  ios_production:
 
-    max_build_duration: 120
+    name: Tiligo iOS Production
+
+    max_build_duration: 90
 
     environment:
-      xcode: latest
-      cocoapods: default
-      node: 20.0.0
 
-      ios_signing:
-        distribution_type: app_store
-        bundle_identifier: com.tiligo.app
+      flutter: stable
+
+      xcode: latest
 
       vars:
-        XCODE_WORKSPACE: "ios/App/App.xcworkspace"
-        XCODE_SCHEME: "App"
-        BUNDLE_ID: "com.tiligo.app"
-        APP_STORE_APPLE_ID: "6771979690"
 
-      groups:
-        - app_store_credentials
+        BUNDLE_ID: "com.base69d519273be8cf966434f77a.app"
+
+        APP_NAME: "TiliGo"
 
     cache:
-      cache_paths:
-        - ~/.npm
-        - ~/.cache/npm
-        - ~/.cocoapods
-        - ~/Library/Caches/CocoaPods
-        - ios/App/Pods
 
-    triggering:
-      events:
-        - push
-      branch_patterns:
-        - pattern: main
-          include: true
+      cache_paths:
+
+        - ~/.pub-cache
+
+        - ios/Pods
+
+        - ~/.gradle
 
     scripts:
-      - name: Install dependencies
-        script: |
-          npm ci
 
-      - name: Build web app
-        script: |
-          npm run build
+      - name: 🔧 Clean environment
 
-      - name: Sync Capacitor iOS
         script: |
-          npx cap sync ios
 
-      - name: Install Pods (clean + deterministic)
-        script: |
-          cd ios/App
-          pod deintegrate || true
-          pod install --repo-update
+          flutter clean
 
-      - name: iOS code signing setup
-        script: |
-          xcode-project use-profiles
+          flutter pub get
 
-      - name: Build IPA
+      - name: 📦 Install iOS dependencies
+
         script: |
-          xcode-project build-ipa \
-            --workspace "$XCODE_WORKSPACE" \
-            --scheme "$XCODE_SCHEME"
+
+          cd ios
+
+          pod install
+
+          cd ..
+
+      - name: 🧪 Run tests (non-blocking)
+
+        script: |
+
+          flutter test || true
+
+      - name: 🏗 Build iOS (auto signing handled by Codemagic)
+
+        script: |
+
+          flutter build ipa --release
+
+      - name: 🏷 Auto versioning
+
+        script: |
+
+          echo "Build number: $BUILD_NUMBER"
+
+          cd ios
+
+          agvtool new-version -all $BUILD_NUMBER || true
+
+          cd ..
 
     artifacts:
+
       - build/ios/ipa/*.ipa
-      - /tmp/xcodebuild_logs/*.log
 
     publishing:
+
       app_store_connect:
+
+        auth: integration
+
         submit_to_testflight: true
+
         beta_groups:
+
           - Internal Testers
 
-      email:
-        recipients:
-          - elgrandexx@icloud.com
-        notify:
-          success: true
-          failure: true
+        release_notes: |
+
+          Automated Tiligo build via Codemagic CI/CD
+
+    triggering:
+
+      branch_patterns:
+
+        - pattern: main
+
+          include: true
