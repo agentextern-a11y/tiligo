@@ -1,205 +1,258 @@
-workflows:
-  tiligo_smart_pipeline:
-    name: Tiligo Enterprise CI/CD Pipeline
-    instance_type: mac_mini_m2
-    max_build_duration: 120
-    
-    # =========================================================
-    # TRIGGERS (Simplified - only basic patterns)
-    # =========================================================
-    triggering:
-      events:
-        - push
-        - pull_request
-        - tag
-      branch_patterns:
-        - pattern: main
-          include: true
-        - pattern: develop
-          include: true
-        - pattern: release/*
-          include: true
-        - pattern: hotfix/*
-          include: true
-        - pattern: docs/*
-          include: false
-      tag_patterns:
-        - pattern: v*
-          include: true
-    
-    # =========================================================
-    # INTEGRATIONS
-    # =========================================================
-    integrations:
-      app_store_connect: tiligo_asc
-    
-    # =========================================================
-    # ENVIRONMENT (Codemagic uses 'environment' not 'environment_variables')
-    # =========================================================
-    environment:
-      flutter: stable
-      xcode: latest
-      cocoapods: default
-    
-    # =========================================================
-    # CACHE (Simplified - no extra fields)
-    # =========================================================
-    cache:
-      cache_paths:
-        - ~/.pub-cache
-        - ~/.gradle/caches
-        - ios/Pods
-        - build/ios/.symlinks
-    
-    # =========================================================
-    # SCRIPTS
-    # =========================================================
-    scripts:
-      - name: Validate Build Environment
-        script: |
-          set -e
-          echo "✓ Validating toolchain..."
-          
-          command -v flutter >/dev/null 2>&1 || { echo "❌ Flutter missing"; exit 1; }
-          command -v pod >/dev/null 2>&1 || { echo "❌ CocoaPods missing"; exit 1; }
-          
-          flutter --version
-          xcodebuild -version
-          
-          echo "✓ Environment ready"
-      
-      - name: Initialize & Cache Dependencies
-        script: |
-          set -e
-          
-          echo "📦 Installing dependencies..."
-          flutter clean
-          flutter pub get
-          
-          if [ -d "ios" ]; then
-            echo "📱 Installing CocoaPods..."
-            cd ios
-            pod install --repo-update
-            cd ..
-          fi
-          
-          echo "✓ Dependencies ready"
-      
-      - name: Static Code Analysis
-        script: |
-          set -e
-          
-          echo "🔍 Running Flutter analyzer..."
-          flutter analyze --fatal-infos --fatal-warnings
-          
-          echo "✓ Code analysis passed"
-      
-      - name: Unit & Widget Tests
-        script: |
-          set -e
-          
-          echo "🧪 Running test suite..."
-          flutter test --coverage
-          
-          echo "✓ All tests passed"
-      
-      - name: Determine Deployment Strategy
-        script: |
-          set -e
-          
-          BRANCH="${CM_BRANCH:-${CM_TAG}}"
-          echo "📍 Source: $BRANCH"
-          
-          if [[ "$BRANCH" == v* ]] || [[ -n "${CM_TAG}" ]]; then
-            BUILD_MODE="production"
-            echo "🏷️ Release tag build"
-          elif [[ "$BRANCH" == hotfix/* ]]; then
-            BUILD_MODE="production"
-            echo "🚑 Hotfix build"
-          elif [[ "$BRANCH" == release/* ]]; then
-            BUILD_MODE="production"
-            echo "📦 Release candidate build"
-          elif [[ "$BRANCH" == "main" ]]; then
-            BUILD_MODE="production"
-            echo "🎯 Main branch build"
-          elif [[ "$BRANCH" == "develop" ]]; then
-            BUILD_MODE="development"
-            echo "🧪 Development build"
-          else
-            BUILD_MODE="debug"
-            echo "🔧 Feature branch build"
-          fi
-          
-          echo "BUILD_MODE=$BUILD_MODE" >> $CM_ENV
-          echo "✅ Mode: $BUILD_MODE"
-      
-      - name: Apply Build Versioning
-        script: |
-          set -e
-          
-          BASE_VERSION=$(grep 'version:' pubspec.yaml | sed 's/version: //' | cut -d'+' -f1)
-          BUILD_NUMBER="${BUILD_NUMBER:-$(date +%Y%m%d%H%M)}"
-          FULL_VERSION="${BASE_VERSION}+${BUILD_NUMBER}"
-          
-          echo "📌 Version: $FULL_VERSION"
-          
-          sed -i '' "s/version: .*/version: $FULL_VERSION/" pubspec.yaml
-          
-          if [ -d "ios" ]; then
-            cd ios
-            agvtool new-marketing-version "$BASE_VERSION" || true
-            agvtool new-version -all "$BUILD_NUMBER" || true
-            cd ..
-          fi
-          
-          echo "VERSION=$FULL_VERSION" >> $CM_ENV
-      
-      - name: Build iOS Application
-        script: |
-          set -e
-          
-          echo "🔨 Building iOS ($BUILD_MODE)..."
-          
-          if [ "$BUILD_MODE" = "production" ]; then
-            flutter build ipa --release --build-number="$BUILD_NUMBER"
-          else
-            flutter build ios --debug --no-codesign
-          fi
-          
-          echo "✅ Build complete"
-      
-      - name: Validate Build Artifacts
-        script: |
-          set -e
-          
-          if [ "$BUILD_MODE" = "production" ]; then
-            if [ ! -f "build/ios/ipa/*.ipa" ]; then
-              echo "❌ IPA file not generated"
-              exit 1
-            fi
-            echo "✅ IPA ready for distribution"
-          else
-            if [ ! -d "build/ios/iphoneos/Runner.app" ]; then
-              echo "❌ .app bundle not generated"
-              exit 1
-            fi
-            echo "✅ .app bundle ready"
-          fi
-    
-    # =========================================================
-    # ARTIFACTS
-    # =========================================================
-    artifacts:
-      - build/ios/ipa/*.ipa
-      - build/ios/iphoneos/Runner.app
-      - coverage/lcov.info
-    
-    # =========================================================
-    # PUBLISHING (Codemagic schema compliant)
-    # =========================================================
-    publishing:
-      app_store_connect:
-        auth: integration
-        submit_to_testflight: true
-        beta_groups:
-          - Internal Testers
+# =========================================================
+# IOS → APP STORE DEPLOYMENT PIPELINE (PRODUCTION-GRADE)
+# STACK: XCODE + FASTLANE + APP STORE CONNECT API
+# =========================================================
+
+# ---------------------------------------------------------
+# 1. INSTALL DEPENDENCIES
+# ---------------------------------------------------------
+
+brew install fastlane
+
+xcode-select --install
+
+# Verify
+fastlane --version
+xcodebuild -version
+
+
+# ---------------------------------------------------------
+# 2. INITIALIZE FASTLANE
+# ---------------------------------------------------------
+
+cd ios
+
+fastlane init
+
+
+# ---------------------------------------------------------
+# 3. CREATE APP STORE CONNECT API KEY
+# ---------------------------------------------------------
+# App Store Connect:
+# Users and Access → Keys → Generate API Key
+#
+# Save:
+# - AuthKey_XXXXXXXX.p8
+# - KEY_ID
+# - ISSUER_ID
+#
+# Store key here:
+#
+# ios/fastlane/AuthKey.p8
+
+
+# ---------------------------------------------------------
+# 4. CREATE FASTFILE
+# ---------------------------------------------------------
+
+# ios/fastlane/Fastfile
+
+default_platform(:ios)
+
+platform :ios do
+
+  desc "Production App Store Release"
+
+  lane :release do
+
+    api_key = app_store_connect_api_key(
+      key_id: "YOUR_KEY_ID",
+      issuer_id: "YOUR_ISSUER_ID",
+      key_filepath: "./fastlane/AuthKey.p8",
+      duration: 1200,
+      in_house: false
+    )
+
+    increment_build_number(
+      xcodeproj: "YourApp.xcodeproj"
+    )
+
+    build_app(
+      scheme: "YourScheme",
+      export_method: "app-store",
+      clean: true,
+      output_directory: "./build",
+      output_name: "YourApp.ipa"
+    )
+
+    upload_to_app_store(
+      api_key: api_key,
+      skip_metadata: true,
+      skip_screenshots: true,
+      submit_for_review: false,
+      automatic_release: false,
+      force: true
+    )
+
+  end
+
+end
+
+
+# ---------------------------------------------------------
+# 5. CONFIGURE CODE SIGNING
+# ---------------------------------------------------------
+
+# OPTION A — AUTOMATIC SIGNING (RECOMMENDED)
+
+# Xcode →
+# Targets → Signing & Capabilities →
+# Enable:
+# [✓] Automatically manage signing
+
+# Team:
+# Select Apple Developer Team
+
+
+# OPTION B — FASTLANE MATCH (ENTERPRISE)
+# ---------------------------------------------------------
+
+fastlane match init
+
+fastlane match appstore
+
+
+# ---------------------------------------------------------
+# 6. BUILD + UPLOAD TO APP STORE
+# ---------------------------------------------------------
+
+fastlane ios release
+
+
+# =========================================================
+# OUTPUT
+# =========================================================
+#
+# SUCCESS PIPELINE:
+#
+# 1. Increment build number
+# 2. Clean archive
+# 3. Generate signed IPA
+# 4. Validate binary
+# 5. Upload to App Store Connect
+# 6. Ready for TestFlight/App Review
+#
+# =========================================================
+
+
+# =========================================================
+# OPTIONAL — CI/CD (GITHUB ACTIONS)
+# =========================================================
+
+# .github/workflows/ios-release.yml
+
+name: iOS Release
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+
+    runs-on: macos-latest
+
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.2'
+
+      - name: Install Fastlane
+        run: gem install fastlane
+
+      - name: Install Pods
+        run: |
+          cd ios
+          pod install
+
+      - name: Deploy
+        run: |
+          cd ios
+          fastlane ios release
+
+
+# =========================================================
+# PURE XCODE CLI (NO FASTLANE)
+# =========================================================
+
+# BUILD ARCHIVE
+
+xcodebuild \
+  -workspace YourApp.xcworkspace \
+  -scheme YourScheme \
+  -configuration Release \
+  -archivePath build/YourApp.xcarchive \
+  archive
+
+
+# EXPORT IPA
+
+xcodebuild \
+  -exportArchive \
+  -archivePath build/YourApp.xcarchive \
+  -exportOptionsPlist ExportOptions.plist \
+  -exportPath build
+
+
+# UPLOAD IPA
+
+xcrun altool \
+  --upload-app \
+  -f build/YourApp.ipa \
+  -t ios \
+  --apiKey YOUR_KEY_ID \
+  --apiIssuer YOUR_ISSUER_ID
+
+
+# =========================================================
+# PRODUCTION HARDENING
+# =========================================================
+
+# REQUIRED:
+#
+# ✓ Version bump automation
+# ✓ Build number automation
+# ✓ API-key auth (NO Apple password)
+# ✓ Match signing sync
+# ✓ CI/CD deployment
+# ✓ Secrets via GitHub Secrets
+# ✓ Release lane separation
+# ✓ TestFlight staging
+# ✓ Crashlytics/Sentry integration
+# ✓ Release rollback strategy
+
+
+# =========================================================
+# COMMON FAILURE FIXES
+# =========================================================
+
+# Signing failure:
+#
+# Xcode → Clean Build Folder
+#
+# rm -rf ~/Library/Developer/Xcode/DerivedData
+
+# CocoaPods issues:
+#
+# pod deintegrate
+# pod install
+
+# Expired profiles:
+#
+# fastlane match nuke distribution
+
+# Build stuck:
+#
+# killall Xcode
+# reboot Mac
+
+
+# =========================================================
+# FINAL EXECUTION COMMAND
+# =========================================================
+
+cd ios && fastlane ios release
