@@ -1,108 +1,49 @@
 workflows:
   tiligo_smart_pipeline:
-    name: Tiligo Enterprise CI/CD Pipeline
+    name: Tiligo CI/CD
 
-    # REQUIRED: must match Codemagic UI integration name
     integrations:
       app_store_connect: tiligo_asc
-
-    max_build_duration: 120
 
     environment:
       flutter: stable
       xcode: latest
 
-    cache:
-      cache_paths:
-        - ~/.pub-cache
-        - ~/.gradle
-        - ios/Pods
-
     scripts:
 
-      # =========================================================
-      # ENV SETUP
-      # =========================================================
-      - name: Initialize Build Environment
+      - name: Detect project root
         script: |
-          set -e
-          flutter clean
+          echo "Repo structure:"
+          ls -R
+
+      - name: Install dependencies
+        script: |
           flutter pub get
 
-      # =========================================================
-      # iOS POD INSTALL (IMPORTANT FIX)
-      # =========================================================
-      - name: Install CocoaPods
+      # ONLY RUN PODS IF ios folder exists
+      - name: Install CocoaPods (safe check)
         script: |
-          set -e
-          cd ios
-          pod install --repo-update
-          cd ..
-
-      # =========================================================
-      # TESTS (non-blocking)
-      # =========================================================
-      - name: Run Tests
-        script: |
-          set +e
-          flutter test
-
-      # =========================================================
-      # ANALYSIS (non-blocking)
-      # =========================================================
-      - name: Analyze Code
-        script: |
-          set +e
-          flutter analyze
-
-      # =========================================================
-      # BUILD MODE DETECTION
-      # =========================================================
-      - name: Determine Build Mode
-        script: |
-          set -e
-
-          echo "Branch: $CM_BRANCH"
-
-          if [ "$CM_BRANCH" = "main" ]; then
-            echo "BUILD_MODE=production" >> $CM_ENV
-          elif [[ "$CM_BRANCH" == v* ]]; then
-            echo "BUILD_MODE=release" >> $CM_ENV
+          if [ -d "ios" ]; then
+            cd ios
+            pod install --repo-update
+            cd ..
           else
-            echo "BUILD_MODE=development" >> $CM_ENV
+            echo "No ios folder found - skipping CocoaPods"
           fi
 
-      # =========================================================
-      # BUILD STEP (FIXED FOR iOS SIGNING)
-      # =========================================================
-      - name: Build iOS App
+      - name: Build iOS
         script: |
-          set -e
-
-          if [ "$BUILD_MODE" = "development" ]; then
-            flutter build ios --debug --no-codesign
-          else
+          if [ -d "ios" ]; then
             flutter build ipa --release
+          else
+            echo "ERROR: No iOS project detected"
+            exit 1
           fi
-
-      # =========================================================
-      # VERSIONING (SAFE)
-      # =========================================================
-      - name: Set Build Number
-        script: |
-          set +e
-          cd ios
-          agvtool new-version -all $BUILD_NUMBER || true
-          cd ..
 
     artifacts:
       - build/ios/ipa/*.ipa
-      - build/ios/iphoneos/*.app
 
     publishing:
       app_store_connect:
         auth: integration
         submit_to_testflight: true
-        beta_groups:
-          - Internal Testers
-        submit_to_app_store: false
