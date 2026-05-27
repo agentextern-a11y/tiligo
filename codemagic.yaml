@@ -3,6 +3,7 @@ workflows:
     name: Tiligo Production
 
     instance_type: mac_mini_m2
+    max_build_duration: 90
 
     integrations:
       app_store_connect: tiligo_asc
@@ -16,18 +17,10 @@ workflows:
       ios_signing:
         distribution_type: app_store
         bundle_identifier: com.base69d519273be8cf966434f77a.app
-        automatic_code_signing: true
 
     scripts:
       - name: Get dependencies
         script: flutter pub get
-
-      - name: Fetch signing files (CRITICAL FIX)
-        script: |
-          app-store-connect fetch-signing-files \
-            "$BUNDLE_ID" \
-            --type IOS_APP_STORE \
-            --create
 
       - name: Build Android
         script: flutter build appbundle --release
