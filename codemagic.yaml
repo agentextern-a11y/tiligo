@@ -20,37 +20,53 @@ workflows:
     scripts:
 
       # =========================================================
-      # VALIDATION STEP (prevents "no iOS project detected")
+      # VALIDATION
       # =========================================================
-      - name: Validate Flutter Project
+      - name: Validate Project
         script: |
           set -e
-          echo "Checking project root..."
+          echo "Checking project structure..."
+
           ls
 
-          test -f pubspec.yaml || (echo "ERROR: pubspec.yaml missing" && exit 1)
-          test -d ios || (echo "ERROR: ios folder missing" && exit 1)
+          test -f pubspec.yaml || (echo "Missing pubspec.yaml" && exit 1)
+          test -d ios || (echo "Missing ios folder" && exit 1)
 
       # =========================================================
-      # DEPENDENCIES
+      # FLUTTER SETUP
       # =========================================================
-      - name: Get Flutter Packages
+      - name: Flutter Dependencies
         script: |
           set -e
+          flutter clean
           flutter pub get
 
-      - name: Clean Build
-        script: |
-          flutter clean
-
       # =========================================================
-      # iOS DEPENDENCIES (COCOAPODS)
+      # COCOAPODS (HARD FIX)
       # =========================================================
-      - name: Install CocoaPods Dependencies
+      - name: Install CocoaPods
         script: |
           set -e
+
+          echo "Ensuring CocoaPods is installed..."
+
+          if ! command -v pod >/dev/null 2>&1; then
+            echo "Installing CocoaPods..."
+            sudo gem install cocoapods --no-document
+          fi
+
+          pod --version
+
+      # =========================================================
+      # IOS POD INSTALL
+      # =========================================================
+      - name: Install iOS Pods
+        script: |
+          set -e
+
           cd ios
-          pod install --repo-update
+          pod repo update
+          pod install
           cd ..
 
       # =========================================================
@@ -70,11 +86,19 @@ workflows:
           flutter analyze
 
       # =========================================================
-      # BUILD IPA
+      # IPA BUILD
       # =========================================================
       - name: Build iOS IPA
         script: |
           set -e
+
+          flutter clean
+          flutter pub get
+
+          cd ios
+          pod install
+          cd ..
+
           flutter build ipa --release
 
     artifacts:
