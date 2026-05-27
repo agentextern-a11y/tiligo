@@ -3,7 +3,7 @@ workflows:
     name: Tiligo iOS Production Pipeline
 
     integrations:
-      app_store_connect: Tiligo_asc
+      app_store_connect: tiligo_asc
 
     max_build_duration: 60
 
@@ -21,84 +21,69 @@ workflows:
 
     scripts:
 
-      # =========================================================
-      # VALIDATE PROJECT
-      # =========================================================
-      - name: Validate Flutter Project
+      # =========================
+      # VALIDATION
+      # =========================
+      - name: Validate Project
         script: |
           set -e
-          echo "Checking project..."
+          test -f pubspec.yaml
+          test -d lib
 
-          test -f pubspec.yaml || (echo "Missing pubspec.yaml" && exit 1)
-          test -d lib || (echo "Missing lib folder" && exit 1)
-
-      # =========================================================
+      # =========================
       # FLUTTER DEPENDENCIES
-      # =========================================================
-      - name: Install Dependencies
+      # =========================
+      - name: Flutter Pub Get
         script: |
           set -e
           flutter pub get
 
-      # =========================================================
-      # COCOAPODS (SAFE INSTALL)
-      # =========================================================
+      # =========================
+      # COCOAPODS
+      # =========================
       - name: Ensure CocoaPods
         script: |
           set -e
 
           if ! command -v pod >/dev/null 2>&1; then
-            echo "Installing CocoaPods..."
             sudo gem install cocoapods --no-document
           fi
 
-          pod --version
-
-      # =========================================================
-      # IOS POD INSTALL (RELIABLE)
-      # =========================================================
-      - name: Install iOS Pods
+      # =========================
+      # IOS POD INSTALL
+      # =========================
+      - name: Install Pods
         script: |
           set -e
-
           cd ios
 
-          if [ ! -f Podfile ]; then
-            echo "ERROR: Podfile missing. Run 'flutter create .' locally and commit ios folder."
-            exit 1
-          fi
+          test -f Podfile
 
           pod install --repo-update
-
           cd ..
 
-      # =========================================================
-      # QUALITY CHECKS (NON-BLOCKING)
-      # =========================================================
+      # =========================
+      # TESTS (NON-BLOCKING)
+      # =========================
       - name: Tests
         script: |
           set +e
           flutter test
 
+      # =========================
+      # ANALYSIS (NON-BLOCKING)
+      # =========================
       - name: Analyze
         script: |
           set +e
           flutter analyze
 
-      # =========================================================
+      # =========================
       # BUILD IPA
-      # =========================================================
-      - name: Build iOS IPA
+      # =========================
+      - name: Build IPA
         script: |
           set -e
-
-          flutter clean
-          flutter pub get
-
-          cd ios
-          pod install
-          cd ..
-
           flutter build ipa --release
 
     artifacts:
