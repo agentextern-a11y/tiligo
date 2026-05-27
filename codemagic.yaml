@@ -1,6 +1,6 @@
 workflows:
   tiligo_ios:
-    name: Tiligo iOS Production Pipeline
+    name: Tiligo iOS Auto-Heal Pipeline
 
     integrations:
       app_store_connect: tiligo_asc
@@ -20,35 +20,48 @@ workflows:
     scripts:
 
       # =========================================================
-      # VALIDATION
+      # VALIDATE PROJECT ROOT
       # =========================================================
       - name: Validate Project
         script: |
           set -e
-          echo "Checking project structure..."
-
-          ls
+          echo "Checking Flutter project..."
 
           test -f pubspec.yaml || (echo "Missing pubspec.yaml" && exit 1)
-          test -d ios || (echo "Missing ios folder" && exit 1)
 
       # =========================================================
       # FLUTTER SETUP
       # =========================================================
-      - name: Flutter Dependencies
+      - name: Flutter Setup
         script: |
           set -e
           flutter clean
           flutter pub get
 
       # =========================================================
-      # COCOAPODS (HARD FIX)
+      # AUTO-HEAL iOS STRUCTURE (IMPORTANT FIX)
+      # =========================================================
+      - name: Ensure iOS Project Exists
+        script: |
+          set -e
+
+          if [ ! -f ios/Podfile ]; then
+            echo "Podfile missing → regenerating iOS platform..."
+            rm -rf ios
+            flutter create .
+          fi
+
+          if [ ! -d ios ]; then
+            echo "iOS folder missing → creating..."
+            flutter create .
+          fi
+
+      # =========================================================
+      # COCOAPODS INSTALL (ROBUST)
       # =========================================================
       - name: Install CocoaPods
         script: |
           set -e
-
-          echo "Ensuring CocoaPods is installed..."
 
           if ! command -v pod >/dev/null 2>&1; then
             echo "Installing CocoaPods..."
@@ -58,19 +71,18 @@ workflows:
           pod --version
 
       # =========================================================
-      # IOS POD INSTALL
+      # POD INSTALL (SAFE)
       # =========================================================
-      - name: Install iOS Pods
+      - name: Install iOS Dependencies
         script: |
           set -e
 
           cd ios
-          pod repo update
-          pod install
+          pod install --repo-update
           cd ..
 
       # =========================================================
-      # TESTS (non-blocking)
+      # TEST (NON-BLOCKING)
       # =========================================================
       - name: Run Tests
         script: |
@@ -78,7 +90,7 @@ workflows:
           flutter test
 
       # =========================================================
-      # ANALYSIS (non-blocking)
+      # ANALYSIS (NON-BLOCKING)
       # =========================================================
       - name: Static Analysis
         script: |
@@ -86,7 +98,7 @@ workflows:
           flutter analyze
 
       # =========================================================
-      # IPA BUILD
+      # BUILD IPA
       # =========================================================
       - name: Build iOS IPA
         script: |
