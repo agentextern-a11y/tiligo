@@ -1,34 +1,77 @@
 workflows:
-  tiligo-production:
-    name: Tiligo Production
+  ios-release:
+    name: iOS Release
 
     instance_type: mac_mini_m2
 
+    max_build_duration: 120
+
     integrations:
-      app_store_connect: tiligo_asc
+      app_store_connect: codemagic
 
     environment:
       flutter: stable
-
-      vars:
-        BUNDLE_ID: com.tili-go.app
+      xcode: latest
 
       ios_signing:
         distribution_type: app_store
-        bundle_identifier: com.tili-go.app
+        bundle_identifier: com.tiligo.app
+
+      vars:
+        BUNDLE_ID: "com.tiligo.app"
+        XCODE_WORKSPACE: "ios/Runner.xcworkspace"
+        XCODE_SCHEME: "Runner"
+
+    cache:
+      cache_paths:
+        - $HOME/.pub-cache
+        - ~/.gradle/caches
+        - ~/.gradle/wrapper
+        - ~/Library/Caches/CocoaPods
+
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+          source: true
 
     scripts:
-      - flutter pub get
-      - flutter clean
-      - cd ios && pod install && cd ..
-      - flutter build appbundle --release
-      - flutter build ipa --release
+      - name: Install dependencies
+        script: |
+          flutter pub get
+
+      - name: CocoaPods install
+        script: |
+          cd ios && pod install
+
+      - name: Flutter analyze
+        script: |
+          flutter analyze
+
+      - name: Flutter test
+        script: |
+          flutter test
+
+      - name: Build IPA
+        script: |
+          flutter build ipa \
+            --release \
+            --export-options-plist=/Users/builder/export_options.plist
 
     artifacts:
-      - build/**/outputs/**/*.aab
       - build/ios/ipa/*.ipa
+      - /tmp/xcodebuild_logs/*.log
+      - flutter_drive.log
 
     publishing:
+      email:
+        recipients:
+          - your@email.com
+
       app_store_connect:
         auth: integration
         submit_to_testflight: true
+        beta_groups:
+          - Internal Testers
